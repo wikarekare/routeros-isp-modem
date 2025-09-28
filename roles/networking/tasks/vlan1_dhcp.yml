@@ -1,0 +1,81 @@
+---
+# This is our internal LAN vlan
+- name: LAN interfaces IP
+  community.routeros.api_modify:
+    path: "ip address"
+    data:
+      - address: "{{ vlan1.ip }}/{{ vlan1.mask_bits }}"
+        network: "{{ vlan1.network }}"
+        interface: "{{ vlan1.name }}"
+        # 'disabled'
+        # 'comment'
+
+#/ip pool
+# add name= ranges=100.64.0.48-100.64.0.62
+- name: LAN DHCP IP Range
+  community.routeros.api_modify:
+    path: "ip pool"
+    data:
+      - name: "{{ dhcp_server.pool_name }}"
+        ranges: "{{ dhcp_server.pool_range }}"
+        # 'next-pool'
+        # 'comment'
+
+#/ip dhcp-server
+# add address-pool=dhcp_pool_vlan1 interface=vlan1 lease-time=1h name=dhcp1
+- name: DHCP Server on LAN
+  community.routeros.api_modify:
+    path: "ip dhcp-server"
+    data:
+      - name: "dhcp1"
+        address-pool: "{{ dhcp_server.pool_name }}"
+        interface: "{{ vlan1.name }}"
+        lease-time: "1h"
+#
+#'address-pool': KeyInfo(default='static-only'),
+#'allow-dual-stack-queue': KeyInfo(can_disable=True, remove_value=True),
+#'always-broadcast': KeyInfo(can_disable=True, remove_value=False),
+#'authoritative': KeyInfo(default=True),
+#'bootp-lease-time': KeyInfo(default='forever'),
+#'bootp-support': KeyInfo(can_disable=True, remove_value='static'),
+#'client-mac-limit': KeyInfo(can_disable=True, remove_value='unlimited'),
+#'comment': KeyInfo(can_disable=True, remove_value=''),
+#'conflict-detection': KeyInfo(can_disable=True, remove_value=True),
+#'delay-threshold': KeyInfo(can_disable=True, remove_value='none'),
+#'dhcp-option-set': KeyInfo(can_disable=True, remove_value='none'),
+#'disabled': KeyInfo(default=False),
+#'insert-queue-before': KeyInfo(can_disable=True, remove_value='first'),
+#'interface': KeyInfo(required=True),
+#'lease-script': KeyInfo(default=''),
+#'lease-time': KeyInfo(default='10m'),
+#'name': KeyInfo(),
+#'parent-queue': KeyInfo(can_disable=True, remove_value='none'),
+#'relay': KeyInfo(can_disable=True, remove_value='0.0.0.0'),
+#'server-address': KeyInfo(can_disable=True, remove_value='0.0.0.0'),
+#'use-framed-as-classless': KeyInfo(can_disable=True, remove_value=True),
+#'use-radius': KeyInfo(default=False),
+
+#/ip dhcp-server network
+# add address=100.64.0.32/27 dns-server=100.64.0.34 gateway=100.64.0.34
+- name: DHCP Server on LAN
+  community.routeros.api_modify:
+    path: "ip dhcp-server network"
+    data:
+      - address: "{{ dhcp_server.network }}"
+        dns-server: "{{ dhcp_server.dns_server }}"
+        gateway: "{{ dhcp_server.gateway }}"
+
+#'address': KeyInfo(),
+#'boot-file-name': KeyInfo(default=''),
+#'caps-manager': KeyInfo(default=''),
+#'comment': KeyInfo(can_disable=True, remove_value=''),
+#'dhcp-option': KeyInfo(default=''),
+#'dhcp-option-set': KeyInfo(default=''),
+#'dns-none': KeyInfo(default=False),
+#'dns-server': KeyInfo(default=''),
+#'domain': KeyInfo(default=''),
+#'gateway': KeyInfo(default=''),
+#'netmask': KeyInfo(can_disable=True, remove_value=0),
+#'next-server': KeyInfo(can_disable=True),
+#'ntp-server': KeyInfo(default=''),
+#'wins-server': KeyInfo(default=''),

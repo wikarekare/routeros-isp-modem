@@ -1,0 +1,20 @@
+---
+- name: Enable NTP
+  community.routeros.api_modify:
+    path: "system ntp client"
+    data:
+      - enabled: "yes"
+
+- name: Set NTP sources
+  community.routeros.api_modify:
+    path: "system ntp client servers"
+    handle_absent_entries: remove
+    data:
+      - address: "100.64.0.4"
+      - address: "100.64.0.1"
+
+- name: Set up NTP
+  community.routeros.api_modify:
+    path: "system clock"
+    data:
+      - time-zone-name: "Pacific/Auckland"

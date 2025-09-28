@@ -1,0 +1,27 @@
+---
+# Port mirror, TX limit, RX limit, 2048 Hosts, 4096 VLAN, 92 rules
+# default-vlan-id=n is for hybrid ports to define the untagged ingress traffic
+# vlan-mode=fallback is the hybrid tagged/untagged mode
+# vlan-mode=check drops untagged traffic. Checks ingress vlan exits
+# vlan-mode=secure drops untagged traffic and ensures ingress and egress vlan exists
+#
+# /interface ethernet switch port
+# eth1 is the ISP port on VLAN 10. Ignore untagged packets
+#set ether1 vlan-mode=secure vlan-header=leave-as-is
+# other ports are LAN
+#set ether2 vlan-mode=fallback vlan-header=leave-as-is default-vlan-id=1
+#set ether3 vlan-mode=fallback vlan-header=leave-as-is default-vlan-id=1
+#set ether4 vlan-mode=fallback vlan-header=leave-as-is default-vlan-id=1
+#set ether5 vlan-mode=fallback vlan-header=leave-as-is default-vlan-id=1
+# Switch port connecting to the CPU
+#set switch1-cpu vlan-mode=leave-as-is
+
+- name: Configure Ethernet LAN Switch Port
+  community.routeros.api_modify:
+    path: "interface ethernet switch port"
+    data:
+      - name: "{{ item.port }}"
+        default-vlan-id: "{{ item.default_vlan_id | default(omit) }}"
+        vlan-header: "{{ item.vlan_header }}"
+        vlan-mode: "{{ item.vlan_mode }}"
+  loop: "{{ switch }}"

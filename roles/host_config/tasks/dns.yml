@@ -1,0 +1,6 @@
+---
+- name: Allow Remote DNS Requests
+  community.routeros.api_modify:
+    path: "ip dns"
+    data:
+      - allow-remote-requests: "yes"

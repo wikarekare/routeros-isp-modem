@@ -1,0 +1,25 @@
+---
+#/interface list
+# add name=WAN
+# add name=LAN
+- name: Add interface to the list if not already present
+  community.routeros.api_modify:
+    path: "interface list"
+    data:
+      - name: "{{ item.name }}"
+      # include, exclude, comment
+  loop: "{{ interface_lists }}"
+
+# WARNING. This step looks to be breaking connectivity
+# unless networking is set up on these vlans
+# /interface list member
+# add interface=vlan10 list=WAN
+# add interface=bridge1 list=LAN
+- name: Add interface to the list if not already present
+  community.routeros.api_modify:
+    path: "interface list member"
+    data:
+      - list: "{{ item.name }}"
+        interface: "{{ item.interface }}"
+        # comment, disabled
+  loop: "{{ interface_lists }}"

@@ -1,0 +1,30 @@
+---
+# /ip route
+#add dst-address=10.0.0.0/8 gateway={{ lan_gw }}
+#add dst-address=192.168.0.0/16 gateway={{ lan_gw }}
+#add dst-address=100.64.0.0/24 gateway={{ lan_gw }}
+- name: Set LAN routes
+  community.routeros.api_modify:
+    path: "ip route"
+    data:
+      - dst-address: "{{ item.network }}"
+        gateway: "{{ item.gateway }}"
+  loop: "{{ lan_routes }}"
+
+# Route options
+#'blackhole': KeyInfo(can_disable=True),
+#'check-gateway': KeyInfo(can_disable=True),
+#'comment': KeyInfo(can_disable=True, remove_value=''),
+#'disabled': KeyInfo(default=False),
+#'distance': KeyInfo(),
+#'dst-address': KeyInfo(),
+#'gateway': KeyInfo(),
+#'pref-src': KeyInfo(),
+#'routing-table': KeyInfo(default='main'),
+#'route-tag': KeyInfo(can_disable=True),
+#'routing-mark': KeyInfo(can_disable=True),
+#'scope': KeyInfo(),
+#'suppress-hw-offload': KeyInfo(default=False),
+#'target-scope': KeyInfo(),
+#'type': KeyInfo(can_disable=True, remove_value='unicast'),
+#'vrf-interface': KeyInfo(can_disable=True),

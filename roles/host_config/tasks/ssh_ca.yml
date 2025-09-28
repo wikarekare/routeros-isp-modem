@@ -1,0 +1,6 @@
+---
+# Manually set
+# /ip ssh
+# set host-key-type=ed25519 strong-crypto=yes
+#
+# Want to have our host CA signed cert

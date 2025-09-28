@@ -1,0 +1,4 @@
+---
+# No wireless interface on our routerboards
+# /interface wireless security-profiles
+# set [ find default=yes ] supplicant-identity=MikroTik

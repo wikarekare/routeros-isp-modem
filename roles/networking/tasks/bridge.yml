@@ -1,0 +1,52 @@
+---
+#- name: Rename a MikroTik bridgeLocal interface or create a new one?
+#  community.routeros.api_modify:
+#    path: "interface bridge"
+#    where:
+#      name: "{{ default_bridge }}"
+#    set:
+#      name: "{{ bridge.name }}"
+
+# Switch ports are connected to this bridge
+# Default bridge1 already exists, so don't bother with this step
+# - name: create bridge for hardware switch
+# /interface bridge
+#   add name=bridge1
+- name: Create bridge interface with bridge vlan filtering untouched
+  community.routeros.api_modify:
+    path: "interface bridge"
+    data:
+      - name: "{{ bridge.name }}"
+        admin-mac: "{{ bridge.switch_mac }}"
+        auto-mac: "no"
+        comment: "{{ bridge.comment }}"
+#
+#        actual-mtu: 1500
+#        mac-address: "{{ switch_mac }}"
+#
+
+
+# Bridge options
+#'admin-mac': KeyInfo(default=''),
+#'ageing-time': KeyInfo(default='5m'),
+#'arp': KeyInfo(default='enabled'),
+#'arp-timeout': KeyInfo(default='auto'),
+#'auto-mac': KeyInfo(default=True),
+#'comment': KeyInfo(can_disable=True, remove_value=''),
+#'dhcp-snooping': KeyInfo(default=False),
+#'disabled': KeyInfo(default=False),
+#'ether-type': KeyInfo(default='0x8100'),
+#'fast-forward': KeyInfo(default=True),
+#'forward-delay': KeyInfo(default='15s'),
+#'frame-types': KeyInfo(default='admit-all'),
+#'igmp-snooping': KeyInfo(default=False),
+#'max-message-age': KeyInfo(default='20s'),
+#'mld-version': KeyInfo(default=1),
+#'mtu': KeyInfo(default='auto'),
+#'multicast-querier': KeyInfo(default=False),
+#'name': KeyInfo(),
+#'priority': KeyInfo(default='0x8000'),
+#'protocol-mode': KeyInfo(default='rstp'),
+#'pvid': KeyInfo(default=1),
+#'transmit-hold-count': KeyInfo(default=6),
+#'vlan-filtering': KeyInfo(default=False),

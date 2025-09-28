@@ -1,0 +1,30 @@
+---
+#/interface vlan
+# add interface=bridge1 name=vlan10 vlan-id=10
+# add interface=bridge1 name=vlan1 vlan-id=1
+# Still need to do the reverse, with /interface bridge vlan add ... ?
+
+- name: Add VLAN 1 and 10 to bridge
+  community.routeros.api_modify:
+    path: "interface vlan"
+    data:
+      - name: "{{ item.name }}"
+        interface: "{{ item.interface }}"
+        vlan-id: "{{ item.vlan_id }}"
+  loop:
+    - { name: "vlan1", interface: "{{ bridge.name }}", vlan_id: "1" }
+    - { name: "vlan10", interface: "{{ bridge.name }}", vlan_id: "10" }
+
+# VLAN options
+#'arp': KeyInfo(default='enabled'),
+#'arp-timeout': KeyInfo(default='auto'),
+#'comment': KeyInfo(can_disable=True, remove_value=''),
+#'disabled': KeyInfo(default=False),
+#'interface': KeyInfo(required=True),
+#'loop-protect': KeyInfo(default='default'),
+#'loop-protect-disable-time': KeyInfo(default='5m'),
+#'loop-protect-send-interval': KeyInfo(default='5s'),
+#'mtu': KeyInfo(default=1500),
+#'name': KeyInfo(),
+#'use-service-tag': KeyInfo(default=False),
+#'vlan-id': KeyInfo(required=True),

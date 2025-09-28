@@ -1,0 +1,9 @@
+---
+#/ip neighbor discovery-settings
+#set discover-interface-list=LAN protocol="lldp"
+- name: set Discovery protocol
+  community.routeros.api_modify:
+    path: "ip neighbor discovery-settings"
+    data:
+      - discover-interface-list: "{{ discovery_protocol.interface_list }}"
+        protocol: "{{ discovery_protocol.protocol }}"

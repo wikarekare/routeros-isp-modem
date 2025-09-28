@@ -1,0 +1,57 @@
+---
+default_bridge: bridgeLocal
+# Reserving a port for setup/management.
+management_interface: bridgeLocal
+bridge:
+  name: "bridge1"
+  switch_mac: "{{ switch_mac }}"
+  comment: "switch"
+  interfaces:
+    - ether1
+    - ether2
+    - ether3
+    - ether4
+  interface_vlans:
+    - { vlan_id: "1", untagged_ports: "ether2,ether3,ether4,switch1-cpu" }
+    - { vlan_id: "10", tagged_ports: "ether1,switch1-cpu" }
+    # Left out ether5 so the default bridge DHCP IP remains for management during configuration.
+    # This needs thought, as on the prod net, it will get a dhcp address an vlan1
+# Repeat bridge settings for switch (look at merging with brige.interface_vlans)
+switch:
+  - { default_vlan_id: "10", port: "ether1", vlan_mode: "secure", vlan_header: "leave-as-is" }
+  # LAN ports are untagged vlan 1
+  - { default_vlan_id: "1", port: "ether2", vlan_mode: "fallback", vlan_header: "leave-as-is" }
+  - { default_vlan_id: "1", port: "ether3", vlan_mode: "fallback", vlan_header: "leave-as-is" }
+  - { default_vlan_id: "1", port: "ether4", vlan_mode: "fallback", vlan_header: "leave-as-is" }
+  # Don't break management access
+  - { port: "ether5", vlan_mode: "fallback", vlan_header: "leave-as-is" }
+  - { port: "switch1-cpu", vlan_mode: "fallback", vlan_header: "leave-as-is" }
+interface_lists:
+  - { name: LAN, interface: vlan1 }
+  - { name: WAN, interface: vlan10 }
+  - { name: MGMT, interface: "{{ management_interface }}" }
+poe_interfaces:
+  - { name: ether2, state: "off" }
+  - { name: ether3, state: "off" }
+  - { name: ether4, state: "off" }
+  - { name: ether5, state: "off" }
+lan_routes:
+  - { network: "10.0.0.0/8", gateway: "{{ lan_gw }}" }
+  - { network: "192.168.0.0/16", gateway: "{{ lan_gw }}" }
+  - { network: "172.16.0.0/12", gateway: "{{ lan_gw }}" }
+  # - { network: "169.254.0.0/16", gateway: "{{ lan_gw }}" }
+  - { network: "100.64.0.0/22", gateway: "{{ lan_gw }}" }
+discovery_protocol:
+  protocol: "lldp"
+  interface_list: LAN
+vlan1:
+  name: "vlan1"
+  ip: "{{ lan_ip }}"
+  network: "100.64.0.32"
+  mask_bits: "27"
+dhcp_server:
+  pool_name: "dhcp_pool_vlan1"
+  pool_range: "100.64.0.48-100.64.0.62"
+  network: "{{ vlan1.network }}/{{ vlan1.mask_bits }}"
+  dns_server: "{{ vlan1.ip }}"
+  gateway: "{{ vlan1.ip }}"

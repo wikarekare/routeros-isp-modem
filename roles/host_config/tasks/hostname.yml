@@ -1,0 +1,6 @@
+---
+- name: Set system identity name to "{{ routeros_hostname }}"
+  community.routeros.api_modify:
+    path: "system identity"
+    data:
+      - name: "{{ routeros_hostname }}"

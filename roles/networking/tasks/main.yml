@@ -1,0 +1,31 @@
+---
+# Reset config for routeros 7.19 leaves us with
+# /interface bridge port
+#   add bridge=bridgeLocal comment=defconf interface=ether1
+#   add bridge=bridgeLocal comment=defconf interface=ether2
+#   add bridge=bridgeLocal comment=defconf interface=ether3
+#   add bridge=bridgeLocal comment=defconf interface=ether4
+#   add bridge=bridgeLocal comment=defconf interface=ether5
+#   add bridge=bridgeLocal comment=defconf interface=sfp1
+# /ip dhcp-client
+#   add comment=defconf interface=bridgeLocal
+
+- include_vars: interfaces.yml
+- include_vars: firewall.yml
+
+# # - include_tasks: wifi.yml
+- include_tasks: poe.yml
+- include_tasks: bridge.yml
+- include_tasks: bridge_interfaces.yml
+- include_tasks: vlan.yml
+- include_tasks: vlan1_dhcp.yml
+- include_tasks: vlan10_dhcp.yml
+- include_tasks: bridge_vlans.yml
+- include_tasks: switch_ports.yml
+# The following use interface List names
+- include_tasks: interface_list.yml
+- include_tasks: routes.yml
+- include_tasks: discovery.yml
+# Firewall
+- include_tasks: firewall.yml
+- include_tasks: nat.yml

@@ -1,0 +1,8 @@
+---
+- name: Gather facts
+  community.routeros.api_facts:
+  register: routeros_facts
+
+- name: Facts
+  debug:
+    var: routeros_facts.ansible_facts.ansible_net_hostname

@@ -1,0 +1,65 @@
+---
+# Routerboard RB960 has QCA8337 for ether1-ether5. SFP1 is connected to the CPU
+
+# /interface bridge port
+#  add bridge=bridge1 interface=ether1 hw=yes
+#  add bridge=bridge1 interface=ether2 hw=yes
+#  add bridge=bridge1 interface=ether3 hw=yes
+#  add bridge=bridge1 interface=ether4 hw=yes
+#  add bridge=bridge1 interface=ether5 hw=yes
+#  sfp1 is connected to the CPU, yet default config has hw=yes
+#  add bridge=bridge1 interface=sfp1 hw=yes
+# Doesn't look to be a switch1-cpu interface for the bridge. Might be assumed
+# It is on the switch.
+#  add bridge=bridge1 interface=switch1-cpu hw=yes
+- name: Add LAN interfaces to bridge. Want hardware accelleration for bridge1 (looks to be the default)
+  community.routeros.api_modify:
+    path: "interface bridge port"
+    data:
+      - bridge: "{{ bridge.name }}"
+        interface: "{{ item }}"
+        hw: "yes"
+  loop: "{{ bridge.interfaces }}"
+
+# Bridge port data variables
+# 'auto-isolate': KeyInfo(default=False),
+#'bpdu-guard': KeyInfo(default=False),
+#'bridge': KeyInfo(required=True),
+#'broadcast-flood': KeyInfo(default=True),
+#'comment': KeyInfo(can_disable=True, remove_value=''),
+#'disabled': KeyInfo(default=False),
+#'edge': KeyInfo(default='auto'),
+#'fast-leave': KeyInfo(default=False),
+#'frame-types': KeyInfo(default='admit-all'),
+#'horizon': KeyInfo(default='none'),
+#'hw': KeyInfo(default=True),
+#'interface': KeyInfo(),
+#'internal-path-cost': KeyInfo(default=10),
+#'learn': KeyInfo(default='auto'),
+#'multicast-router': KeyInfo(default='temporary-query'),
+#'path-cost': KeyInfo(default=10),
+#'point-to-point': KeyInfo(default='auto'),
+#'priority': KeyInfo(default='0x80'),
+#'pvid': KeyInfo(default=1),
+#'restricted-role': KeyInfo(default=False),
+#'restricted-tcn': KeyInfo(default=False),
+#'tag-stacking': KeyInfo(default=False),
+#'trusted': KeyInfo(default=False),
+#'unknown-multicast-flood': KeyInfo(default=True),
+#'unknown-unicast-flood': KeyInfo(default=True),
+
+#/interface bridge vlan
+#add bridge=bridge1 tagged=ether1 vlan-ids=10
+#add bridge=bridge1 untagged=ether2,ether3,ether4,ether5 vlan-ids=1
+- name: Configure VLANs on the bridge
+  community.routeros.api_find_and_modify:
+    path: "interface bridge vlan"
+    find:
+      vlan-ids: "{{ item.vlan_id }}"
+    values:
+      bridge: "{{ bridge.name }}"
+      vlan-ids: "{{ item.vlan_id }}"
+      tagged: "{{ item.tagged_ports | default(omit) }}"
+      untagged: "{{ item.untagged_ports | default(omit) }}" # Use omit if untagged is not always present
+      # comment:
+  loop: "{{ bridge.interface_vlans }}"
