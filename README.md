@@ -7,9 +7,11 @@ The Ansible community.routeros.api module attempts to make the Mikrotik configur
 
 We are using RouterOS 7.19.4, which when reset, starts with all ports connected to bridgeLocal, which is a welcome change from earlier versions. We therefore don't need to use `winbox` or `run-after-reset` scripts to bootstrap the router. We do need to be careful not to break the connection to the router though (as we have done many times. For now we have left ether5 without a VLAN on bridgeLocal on the switch, to be used for the initial Ansible configuration.
 
-After a new router has been reset to its default settings, we do need to login manually to set the initial password. Then we can run the playbook to get a working configuration. We can also make changes to the router.yml definitions, and another Ansible run will (should) update the running configuration (without a router reset). We maintain these routers remotely, so don't want a long car trip to make changes.
+Nb. Playbook variables have had '-' changed to '_', so Ansible is happy.
 
 ## Running the playbook
+
+After a new router has been reset to its default settings, we do need to login manually to set the initial password. Then we can run the playbook to get a working configuration. We can also make changes to the router.yml definitions, and another Ansible run will (should) update the running configuration (without a router reset). We maintain these routers remotely, so don't want a long car trip to make changes.
 
 We have a Python environment for use with Ansible, and a Makefile to run the playbook by just running `make`. We can also test the playbook, without making changes, with `make check`.
 
@@ -28,7 +30,8 @@ python3 -m pip install ansible-pylibssh
 
 ## RouterOS 7.19 RB960 Reset configuration.
 
-Reset the router by holding down the `Reset` button while plugging in the power and wait for the `USR` LED to flash, then stop flashing. The router will get a `DHCP` address, available on all ports, which are all now on `bridgeLocal`
+Reset the router by holding down the `Reset` button while plugging in the power and wait for the `USR` LED to flash, then stop flashing. The router will get a `DHCP` address, available on all ports, which are all now on `bridgeLocal`.
+
 ```
 /interface bridge
 add admin-mac=XX:XX:XX:XX:XX:XX auto-mac=no comment=defconf name=bridgeLocal
