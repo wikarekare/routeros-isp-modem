@@ -36,10 +36,11 @@ poe_interfaces:
   - { name: ether4, state: "off" }
   - { name: ether5, state: "off" }
 lan_routes:
+  # Routes to stop private network IPs trying to route to world
   - { network: "10.0.0.0/8", gateway: "{{ lan_gw }}" }
   - { network: "192.168.0.0/16", gateway: "{{ lan_gw }}" }
   - { network: "172.16.0.0/12", gateway: "{{ lan_gw }}" }
-  # - { network: "169.254.0.0/16", gateway: "{{ lan_gw }}" }
+  - { network: "169.254.0.0/16", gateway: "{{ lan_gw }}" }
   - { network: "100.64.0.0/22", gateway: "{{ lan_gw }}" }
 discovery_protocol:
   protocol: "lldp"
@@ -47,11 +48,11 @@ discovery_protocol:
 vlan1:
   name: "vlan1"
   ip: "{{ lan_ip }}"
-  network: "100.64.0.32"
+  network: "{{ lan_network }}"
   mask_bits: "27"
 dhcp_server:
   pool_name: "dhcp_pool_vlan1"
-  pool_range: "100.64.0.48-100.64.0.62"
+  pool_range: "{{ dhcp_range }} "
   network: "{{ vlan1.network }}/{{ vlan1.mask_bits }}"
   dns_server: "{{ vlan1.ip }}"
   gateway: "{{ vlan1.ip }}"

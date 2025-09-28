@@ -18,4 +18,4 @@
       - name: "wikk_ovc_ro"
         read-access: "yes"
         write-access: "no"
-        addresses: "100.64.0.0/16"
+        addresses: "{{ vlan1.network }}/{{ vlan1.mask_bits }}"

@@ -10,8 +10,8 @@
     path: "system ntp client servers"
     handle_absent_entries: remove
     data:
-      - address: "100.64.0.4"
-      - address: "100.64.0.1"
+      - address: "{{ ntp1 }}"
+      - address: "{{ ntp2 }}"
 
 - name: Set up NTP
   community.routeros.api_modify:
