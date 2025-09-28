@@ -1,0 +1,14 @@
+# INI Formated inventory (can also use YAML)
+
+# Named group of hosts so you can run a playbook across multiple hosts using the group name
+[mikrotik]
+# host with inline variable following the host declaration
+myhostname ansible_host=xx.xx.xx.xx switch_mac=XX:XX:XX:XX:XX:XX lan_ip=xx.xx.xx.xx lan_gw=xx.xx.xx.xx
+
+# Variables for every host in the mikrotik group
+[mikrotik:vars]
+ansible_user=admin
+ansible_connection=network_cli
+ansible_network_os=routeros
+#ansible_ssh_pass=xxxxxxxxxx
+ansible_api_pass=xxxxxxxxxx
