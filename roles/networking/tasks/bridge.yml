@@ -16,37 +16,28 @@
   community.routeros.api_modify:
     path: "interface bridge"
     data:
-      - name: "{{ bridge.name }}"
-        admin-mac: "{{ bridge.switch_mac }}"
-        auto-mac: "no"
-        comment: "{{ bridge.comment }}"
-#
-#        actual-mtu: 1500
-#        mac-address: "{{ switch_mac }}"
-#
-
-
-# Bridge options
-#'admin-mac': KeyInfo(default=''),
-#'ageing-time': KeyInfo(default='5m'),
-#'arp': KeyInfo(default='enabled'),
-#'arp-timeout': KeyInfo(default='auto'),
-#'auto-mac': KeyInfo(default=True),
-#'comment': KeyInfo(can_disable=True, remove_value=''),
-#'dhcp-snooping': KeyInfo(default=False),
-#'disabled': KeyInfo(default=False),
-#'ether-type': KeyInfo(default='0x8100'),
-#'fast-forward': KeyInfo(default=True),
-#'forward-delay': KeyInfo(default='15s'),
-#'frame-types': KeyInfo(default='admit-all'),
-#'igmp-snooping': KeyInfo(default=False),
-#'max-message-age': KeyInfo(default='20s'),
-#'mld-version': KeyInfo(default=1),
-#'mtu': KeyInfo(default='auto'),
-#'multicast-querier': KeyInfo(default=False),
-#'name': KeyInfo(),
-#'priority': KeyInfo(default='0x8000'),
-#'protocol-mode': KeyInfo(default='rstp'),
-#'pvid': KeyInfo(default=1),
-#'transmit-hold-count': KeyInfo(default=6),
-#'vlan-filtering': KeyInfo(default=False),
+      - name: "{{ item.name }}"
+        admin-mac: "{{ item.admin_mac | default(omit) }}"
+        ageing-time: "{{ item.ageing_time | default(omit) }}"
+        arp: "{{ item.arp | default(omit) }}"
+        arp-timeout: "{{ item.arp_timeout | default(omit) }}"
+        auto-mac: "{{ item.auto_mac | default(omit) }}"
+        comment: "{{ item.comment | default(omit) }}"
+        dhcp-snooping: "{{ item.dhcp_snooping | default(omit) }}"
+        disabled: "{{ item.disabled | default(omit) }}"
+        ether-type: "{{ item.ether_type | default(omit) }}"
+        fast-forward: "{{ item.fast_forward | default(omit) }}"
+        forward-delay: "{{ item.forward_delay | default(omit) }}"
+        frame-types: "{{ item.frame_types | default(omit) }}"
+        igmp-snooping: "{{ item.igmp_snooping | default(omit) }}"
+        max-message-age: "{{ item.max_message_age | default(omit) }}"
+        mld-version: "{{ item.mld_version | default(omit) }}"
+        mtu: "{{ item.mtu | default(omit) }}"
+        multicast-querier: "{{ item.multicast_querier | default(omit) }}"
+        priority: "{{ item.priority | default(omit) }}"
+        protocol-mode: "{{ item.protocol_mode | default(omit) }}"
+        pvid: "{{ item.pvid | default(omit) }}"
+        transmit-hold-count: "{{ item.transmit_hold_count | default(omit) }}"
+        vlan-filtering: "{{ item.vlan_filtering | default(omit) }}"
+  loop:
+    - { name: "{{ bridge.name }}", comment: "{{ bridge.comment }}", admin-mac: "{{ bridge.switch_mac }}", auto-mac: "no" }

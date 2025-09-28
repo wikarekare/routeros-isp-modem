@@ -8,7 +8,6 @@
       - action: "{{ item.action }}"
         chain: "{{ item.chain }}"
         comment: "{{ item.comment | default(omit) }}"
-        # .id: "*{{ rindex + 1 }}"
         address-list: "{{ item.address_list | default(omit) }}"
         address-list-timeout: "{{ item.address_list_timeout | default(omit) }}"
         connection-bytes: "{{ item.connection_bytes | default(omit) }}"
@@ -67,6 +66,7 @@
         to-addresses: "{{ item.to_addresses | default(omit) }}"
         to-ports: "{{ item.to_ports | default(omit) }}"
         ttl: "{{ item.ttl | default(omit) }}"
+         # .id: "*{{ rindex + 1 }}"
   loop: "{{ nat_rules }}"
   loop_control:
     index_var: rindex

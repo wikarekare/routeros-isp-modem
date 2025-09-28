@@ -7,24 +7,20 @@
   community.routeros.api_modify:
     path: "ip route"
     data:
-      - dst-address: "{{ item.network }}"
-        gateway: "{{ item.gateway }}"
+      - dst-address: "{{ item.dst_address | default(omit) }}"
+        blackhole: "{{ item.blackhole | default(omit) }}"
+        check-gateway: "{{ item.check_gateway | default(omit) }}"
+        comment: "{{ item.comment | default(omit) }}"
+        disabled: "{{ item.disabled | default(omit) }}"
+        distance: "{{ item.distance | default(omit) }}"
+        gateway: "{{ item.gateway | default(omit) }}"
+        pref-src: "{{ item.pref_src | default(omit) }}"
+        routing-table: "{{ item.routing_table | default(omit) }}"
+        route-tag: "{{ item.route_tag | default(omit) }}"
+        routing-mark: "{{ item.routing_mark | default(omit) }}"
+        scope: "{{ item.scope | default(omit) }}"
+        suppress-hw-offload: "{{ item.suppress_hw_offload | default(omit) }}"
+        target-scope: "{{ item.target_scope | default(omit) }}"
+        type: "{{ item.type | default(omit) }}"
+        vrf-interface: "{{ item.vrf_interface | default(omit) }}"
   loop: "{{ lan_routes }}"
-
-# Route options
-#'blackhole': KeyInfo(can_disable=True),
-#'check-gateway': KeyInfo(can_disable=True),
-#'comment': KeyInfo(can_disable=True, remove_value=''),
-#'disabled': KeyInfo(default=False),
-#'distance': KeyInfo(),
-#'dst-address': KeyInfo(),
-#'gateway': KeyInfo(),
-#'pref-src': KeyInfo(),
-#'routing-table': KeyInfo(default='main'),
-#'route-tag': KeyInfo(can_disable=True),
-#'routing-mark': KeyInfo(can_disable=True),
-#'scope': KeyInfo(),
-#'suppress-hw-offload': KeyInfo(default=False),
-#'target-scope': KeyInfo(),
-#'type': KeyInfo(can_disable=True, remove_value='unicast'),
-#'vrf-interface': KeyInfo(can_disable=True),

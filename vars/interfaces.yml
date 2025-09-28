@@ -1,4 +1,5 @@
 ---
+# Note for variables with '-'s we have substituted '_' or we get an Ansible error with loops
 default_bridge: bridgeLocal
 # Reserving a port for setup/management.
 management_interface: bridgeLocal
@@ -7,10 +8,10 @@ bridge:
   switch_mac: "{{ switch_mac }}"
   comment: "switch"
   interfaces:
-    - ether1
-    - ether2
-    - ether3
-    - ether4
+    - { interface: ether1, hw: "yes" }
+    - { interface: ether2, hw: "yes" }
+    - { interface: ether3, hw: "yes" }
+    - { interface: ether4, hw: "yes" }
   interface_vlans:
     - { vlan_id: "1", untagged_ports: "ether2,ether3,ether4,switch1-cpu" }
     - { vlan_id: "10", tagged_ports: "ether1,switch1-cpu" }
@@ -31,17 +32,17 @@ interface_lists:
   - { name: WAN, interface: vlan10 }
   - { name: MGMT, interface: "{{ management_interface }}" }
 poe_interfaces:
-  - { name: ether2, state: "off" }
-  - { name: ether3, state: "off" }
-  - { name: ether4, state: "off" }
-  - { name: ether5, state: "off" }
+  - { name: ether2, poe_out: "off" }
+  - { name: ether3, poe_out: "off" }
+  - { name: ether4, poe_out: "off" }
+  - { name: ether5, poe_out: "off" }
 lan_routes:
   # Routes to stop private network IPs trying to route to world
-  - { network: "10.0.0.0/8", gateway: "{{ lan_gw }}" }
-  - { network: "192.168.0.0/16", gateway: "{{ lan_gw }}" }
-  - { network: "172.16.0.0/12", gateway: "{{ lan_gw }}" }
-  - { network: "169.254.0.0/16", gateway: "{{ lan_gw }}" }
-  - { network: "100.64.0.0/22", gateway: "{{ lan_gw }}" }
+  - { dst_address: "10.0.0.0/8", gateway: "{{ lan_gw }}" }
+  - { dst_address: "192.168.0.0/16", gateway: "{{ lan_gw }}" }
+  - { dst_address: "172.16.0.0/12", gateway: "{{ lan_gw }}" }
+  - { dst_address: "169.254.0.0/16", gateway: "{{ lan_gw }}" }
+  - { dst_address: "100.64.0.0/22", gateway: "{{ lan_gw }}" }
 discovery_protocol:
   protocol: "lldp"
   interface_list: LAN
@@ -52,7 +53,7 @@ vlan1:
   mask_bits: "27"
 dhcp_server:
   pool_name: "dhcp_pool_vlan1"
-  pool_range: "{{ dhcp_range }} "
+  pool_range: "{{ dhcp_range }}"
   network: "{{ vlan1.network }}/{{ vlan1.mask_bits }}"
   dns_server: "{{ vlan1.ip }}"
   gateway: "{{ vlan1.ip }}"

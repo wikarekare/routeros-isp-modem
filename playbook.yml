@@ -18,6 +18,9 @@
   vars:
     routeros_hostname: fibre2
     routeros_domainname: wikarekare.org
+  vars_files:
+    - vars/interfaces.yml
+    - vars/firewall.yml
 
   #  tasks:
   #    - name: Gather facts

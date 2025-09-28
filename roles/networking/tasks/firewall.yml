@@ -10,7 +10,6 @@
       - action: "{{ item.action }}"
         chain: "{{ item.chain }}"
         comment: "{{ item.comment | default(omit) }}"
-        # .id: "*{{ rindex + 1 }}"
         address-list: "{{ item.address_list | default(omit) }}"
         address-list-timeout: "{{ item.address_list_timeout | default(omit) }}"
         connection-bytes: "{{ item.connection_bytes | default(omit) }}"
@@ -72,6 +71,7 @@
         time: "{{ item.time | default(omit) }}"
         tls-host: "{{ item.tls_host | default(omit) }}"
         ttl: "{{ item.ttl | default(omit) }}"
+         # .id: "*{{ rindex + 1 }}"
   loop: "{{ firewall_rules }}"
   loop_control:
     index_var: rindex

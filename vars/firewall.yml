@@ -1,3 +1,4 @@
+# Note for variables with '-'s we have substituted '_' or we get an Ansible error with loops
 firewall_rules:
   # input chain
   - { action: accept, chain: input, comment: "accept established,related,untracked", connection_state: "established,related,untracked" }

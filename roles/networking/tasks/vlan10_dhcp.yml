@@ -2,19 +2,18 @@
 # This is the ISP fibre VLAN
 #/ip dhcp-client
 #add interface=vlan10
-- name: VLAN10 interfaces IP
+- name: VLAN10 DHCP Client Config
   community.routeros.api_modify:
     path: "ip dhcp-client"
     data:
-      - interface: "vlan10"
-
-# Client options
-#'add-default-route': KeyInfo(default=True),
-#'comment': KeyInfo(can_disable=True, remove_value=''),
-#'default-route-distance': KeyInfo(default=1),
-#'dhcp-options': KeyInfo(default='hostname,clientid', can_disable=True, remove_value=''),
-#'disabled': KeyInfo(default=False),
-#'interface': KeyInfo(),
-#'script': KeyInfo(can_disable=True),
-#'use-peer-dns': KeyInfo(default=True),
-#'use-peer-ntp': KeyInfo(default=True),
+      - interface: "{{ item.interface }}"
+        add-default-route: "{{ item.add_default_route | default(omit) }}"
+        comment: "{{ item.comment | default(omit) }}"
+        default-route-distance: "{{ item.default_route_distance | default(omit) }}"
+        dhcp-options: "{{ item.dhcp_options | default(omit) }}"
+        disabled: "{{ item.disabled | default(omit) }}"
+        script: "{{ item.script | default(omit) }}"
+        use-peer-dns: "{{ item.use_peer_dns | default(omit) }}"
+        use-peer-ntp: "{{ item.use_peer_ntp | default(omit) }}"
+  loop:
+    - { interface: "vlan10" }

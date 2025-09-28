@@ -10,11 +10,8 @@
 # /ip dhcp-client
 #   add comment=defconf interface=bridgeLocal
 
-- include_vars: interfaces.yml
-- include_vars: firewall.yml
-
-# # - include_tasks: wifi.yml
-- include_tasks: poe.yml
+# - include_tasks: wifi.yml
+- include_tasks: ethernet.yml
 - include_tasks: bridge.yml
 - include_tasks: bridge_interfaces.yml
 - include_tasks: vlan.yml

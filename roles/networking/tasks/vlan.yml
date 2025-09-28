@@ -10,21 +10,16 @@
     data:
       - name: "{{ item.name }}"
         interface: "{{ item.interface }}"
-        vlan-id: "{{ item.vlan_id }}"
+        arp: "{{ item.arp | default(omit) }}"
+        arp-timeout: "{{ item.arp_timeout | default(omit) }}"
+        comment: "{{ item.comment | default(omit) }}"
+        disabled: "{{ item.disabled | default(omit) }}"
+        loop-protect: "{{ item.loop_protect | default(omit) }}"
+        loop-protect-disable-time: "{{ item.loop_protect_disable_time | default(omit) }}"
+        loop-protect-send-interval: "{{ item.loop_protect_send_interval | default(omit) }}"
+        mtu: "{{ item.mtu | default(omit) }}"
+        use-service-tag: "{{ item.use_service_tag | default(omit) }}"
+        vlan-id: "{{ item.vlan_id | default(omit) }}"
   loop:
     - { name: "vlan1", interface: "{{ bridge.name }}", vlan_id: "1" }
     - { name: "vlan10", interface: "{{ bridge.name }}", vlan_id: "10" }
-
-# VLAN options
-#'arp': KeyInfo(default='enabled'),
-#'arp-timeout': KeyInfo(default='auto'),
-#'comment': KeyInfo(can_disable=True, remove_value=''),
-#'disabled': KeyInfo(default=False),
-#'interface': KeyInfo(required=True),
-#'loop-protect': KeyInfo(default='default'),
-#'loop-protect-disable-time': KeyInfo(default='5m'),
-#'loop-protect-send-interval': KeyInfo(default='5s'),
-#'mtu': KeyInfo(default=1500),
-#'name': KeyInfo(),
-#'use-service-tag': KeyInfo(default=False),
-#'vlan-id': KeyInfo(required=True),

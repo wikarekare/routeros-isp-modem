@@ -7,7 +7,9 @@
     path: "interface list"
     data:
       - name: "{{ item.name }}"
-      # include, exclude, comment
+        comment: "{{ item.comment | default(omit) }}"
+        exclude: "{{ item.exclude | default(omit) }}"
+        include: "{{ item.include | default(omit) }}"
   loop: "{{ interface_lists }}"
 
 # WARNING. This step looks to be breaking connectivity
@@ -21,5 +23,6 @@
     data:
       - list: "{{ item.name }}"
         interface: "{{ item.interface }}"
-        # comment, disabled
+        comment: "{{ item.comment | default(omit) }}"
+        disabled: "{{ item.disabled | default(omit) }}"
   loop: "{{ interface_lists }}"
