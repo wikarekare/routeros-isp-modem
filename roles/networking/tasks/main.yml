@@ -17,7 +17,7 @@
 - include_tasks: vlan.yml
 - include_tasks: vlan1_dhcp.yml
 - include_tasks: vlan10_dhcp.yml
-- include_tasks: bridge_vlans.yml
+# - include_tasks: bridge_vlans.yml
 - include_tasks: switch_ports.yml
 # The following use interface List names
 - include_tasks: interface_list.yml

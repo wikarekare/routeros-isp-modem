@@ -40,4 +40,4 @@
         transmit-hold-count: "{{ item.transmit_hold_count | default(omit) }}"
         vlan-filtering: "{{ item.vlan_filtering | default(omit) }}"
   loop:
-    - { name: "{{ bridge.name }}", comment: "{{ bridge.comment }}", admin-mac: "{{ bridge.switch_mac }}", auto-mac: "no" }
+    - { name: "{{ bridge.name }}", comment: "{{ bridge.comment }}", admin_mac: "{{ bridge.switch_mac }}", auto_mac: "no", vlan_filtering: "yes" }

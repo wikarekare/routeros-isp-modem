@@ -50,7 +50,7 @@
         use-framed-as-classless: "{{ item.use_framed_as_classless | default(omit) }}"
         use-radius: "{{ item.use_radius | default(omit) }}"
   loop:
-    - { name: dhcp1, interface: "{{ vlan1.name }}", address_pool: "{{ dhcp_server.pool_name }}", lease-time: "1h"}
+    - { name: dhcp1, interface: "{{ vlan1.name }}", address_pool: "{{ dhcp_server.pool_name }}", lease_time: "1h"}
 #
 #/ip dhcp-server network
 # add address=xx.xx.xx.xx/24 dns-server=xx.xx.xx.xx gateway=xx.xx.xx.xx
