@@ -14,3 +14,10 @@ These don't fail, and they don't produce duplicate configuration entries.
 
 This one works for all firewall rules but one.
 * firewall.yml  fasttrack-connection rule with hw=yes always shows `changed` and adds a dulicate rule to the end of the rules.
+
+For firewall rules, loops don't work as expected. If these are set, then the resulting firewall rule set becomes just the last rule in the loop. This disconnected me, part way through adding my ruleset, as the previous accepts had been removed.
+```
+    handle_absent_entries: remove
+    handle_entries_content: remove_as_much_as_possible
+    ensure_order: true
+```
