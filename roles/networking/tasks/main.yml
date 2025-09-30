@@ -19,7 +19,6 @@
 - include_tasks: ip_address.yml
 - include_tasks: dhcp_server.yml
 - include_tasks: dhcp_client.yml
-# - include_tasks: bridge_vlans.yml
 - include_tasks: switch_ports.yml
 # The following use interface List names
 - include_tasks: interface_list.yml
