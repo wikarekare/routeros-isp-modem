@@ -1,0 +1,16 @@
+---
+#/interface bridge vlan
+#add bridge=bridge1 tagged=ether1 vlan-ids=10
+#add bridge=bridge1 untagged=ether2,ether3,ether4,ether5 vlan-ids=1
+- name: Configure VLANs on the bridge
+  community.routeros.api_find_and_modify:
+    path: "interface bridge vlan"
+    find:
+      vlan-ids: "{{ item.vlan_id }}"
+    values:
+      bridge: "{{ bridge.name }}"
+      vlan-ids: "{{ item.vlan_id }}"
+      tagged: "{{ item.tagged_ports | default(omit) }}"
+      untagged: "{{ item.untagged_ports | default(omit) }}" # Use omit if untagged is not always present
+      comment: "{{ item.comment | default(omit) }}"
+  loop: "{{ bridge.interface_vlans }}"

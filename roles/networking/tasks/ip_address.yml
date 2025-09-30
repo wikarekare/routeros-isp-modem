@@ -1,0 +1,13 @@
+---
+# This is our internal LAN vlan
+- name: Interface IP Settings
+  community.routeros.api_modify:
+    path: "ip address"
+    data:
+      - address: "{{ vlan1.ip }}/{{ vlan1.mask_bits }}"
+        network: "{{ vlan1.network }}"
+        interface: "{{ vlan1.name }}"
+        comment: "{{ item.next_pool | default(omit) }}"
+        disabled: "{{ item.disabled | default(omit) }}"
+  loop:
+    - { address: "{{ vlan1.ip }}/{{ vlan1.mask_bits }}", network: "{{ vlan1.network }}", interface: "{{ vlan1.name }}"}

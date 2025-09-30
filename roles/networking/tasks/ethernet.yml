@@ -1,6 +1,6 @@
 ---
 # Don't need POE on, so safer for it to be off
-- name: Disable POE where we aren't using it
+- name: Ethernet Port Settings
   community.routeros.api_find_and_modify:
     path: "interface ethernet"
     find:

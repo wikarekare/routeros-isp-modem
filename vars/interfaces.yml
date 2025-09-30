@@ -1,11 +1,13 @@
 ---
 # Note for variables with '-'s we have substituted '_' or we get an Ansible error with loops
 default_bridge: bridgeLocal
+
 # Reserving a port for setup/management.
 management_interface: bridgeLocal
+
 bridge:
   name: "bridge1"
-  switch_mac: "{{ switch_mac }}"
+  switch_mac: "{{ br1_switch_mac }}"
   comment: "switch"
   interfaces:
     - { interface: ether1, hw: "yes" }
@@ -17,6 +19,7 @@ bridge:
     - { vlan_id: "10", tagged_ports: "ether1,switch1-cpu" }
     # Left out ether5 so the default bridge DHCP IP remains for management during configuration.
     # This needs thought, as on the prod net, it will get a dhcp address an vlan1
+
 # Repeat bridge settings for switch (look at merging with brige.interface_vlans)
 switch:
   - { default_vlan_id: "10", port: "ether1", vlan_mode: "secure", vlan_header: "leave-as-is" }
@@ -27,15 +30,18 @@ switch:
   # Don't break management access
   - { port: "ether5", vlan_mode: "fallback", vlan_header: "leave-as-is" }
   - { port: "switch1-cpu", vlan_mode: "fallback", vlan_header: "leave-as-is" }
+
 interface_lists:
   - { name: LAN, interface: vlan1 }
   - { name: WAN, interface: vlan10 }
   - { name: MGMT, interface: "{{ management_interface }}" }
+
 poe_interfaces:
   - { name: ether2, poe_out: "off" }
   - { name: ether3, poe_out: "off" }
   - { name: ether4, poe_out: "off" }
   - { name: ether5, poe_out: "off" }
+
 lan_routes:
   # Routes to stop private network IPs trying to route to world
   - { dst_address: "10.0.0.0/8", gateway: "{{ lan_gw }}" }
@@ -43,14 +49,17 @@ lan_routes:
   - { dst_address: "172.16.0.0/12", gateway: "{{ lan_gw }}" }
   - { dst_address: "169.254.0.0/16", gateway: "{{ lan_gw }}" }
   - { dst_address: "100.64.0.0/22", gateway: "{{ lan_gw }}" }
+
 discovery_protocol:
   protocol: "lldp"
   interface_list: LAN
+
 vlan1:
   name: "vlan1"
   ip: "{{ lan_ip }}"
   network: "{{ lan_network }}"
-  mask_bits: "27"
+  mask_bits: "{{ lan_mask_bits }}"
+
 dhcp_server:
   pool_name: "dhcp_pool_vlan1"
   pool_range: "{{ dhcp_range }}"

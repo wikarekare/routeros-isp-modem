@@ -14,9 +14,11 @@
 - include_tasks: ethernet.yml
 - include_tasks: bridge.yml
 - include_tasks: bridge_interfaces.yml
+- include_tasks: bridge_vlan.yml
 - include_tasks: vlan.yml
-- include_tasks: vlan1_dhcp.yml
-- include_tasks: vlan10_dhcp.yml
+- include_tasks: ip_address.yml
+- include_tasks: dhcp_server.yml
+- include_tasks: dhcp_client.yml
 # - include_tasks: bridge_vlans.yml
 - include_tasks: switch_ports.yml
 # The following use interface List names

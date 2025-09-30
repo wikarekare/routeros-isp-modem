@@ -2,7 +2,7 @@
 #/interface list
 # add name=WAN
 # add name=LAN
-- name: Add interface to the list if not already present
+- name: Interface List Settings
   community.routeros.api_modify:
     path: "interface list"
     data:
@@ -17,7 +17,7 @@
 # /interface list member
 # add interface=vlan10 list=WAN
 # add interface=bridge1 list=LAN
-- name: Add interface to the list if not already present
+- name: Interface List Members
   community.routeros.api_modify:
     path: "interface list member"
     data:

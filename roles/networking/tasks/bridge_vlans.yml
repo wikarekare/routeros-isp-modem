@@ -1,9 +1,0 @@
----
-# Don't want bridge filtering on until vlans have been defined
-# Doesn't need to be separate if we have a dedicated management port.
-- name: Enable bridge vlan filtering
-  community.routeros.api_modify:
-    path: "interface bridge"
-    data:
-      - name: "{{ bridge.name }}"
-        vlan-filtering: "yes"

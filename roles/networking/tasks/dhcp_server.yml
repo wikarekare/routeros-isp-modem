@@ -1,29 +1,20 @@
 ---
-# This is our internal LAN vlan
-- name: LAN interfaces IP
-  community.routeros.api_modify:
-    path: "ip address"
-    data:
-      - address: "{{ vlan1.ip }}/{{ vlan1.mask_bits }}"
-        network: "{{ vlan1.network }}"
-        interface: "{{ vlan1.name }}"
-        # 'disabled'
-        # 'comment'
-
 #/ip pool
 # add name= ranges=xx.xx.xx.xx-xx.xx.xx.xx
-- name: LAN DHCP IP Range
+- name: DHCP Server IP Pool
   community.routeros.api_modify:
     path: "ip pool"
     data:
-      - name: "{{ dhcp_server.pool_name }}"
-        ranges: "{{ dhcp_server.pool_range }}"
-        # 'next-pool'
-        # 'comment'
+      - name: "{{ item.name }}"
+        ranges: "{{ item.ranges }}"
+        next-pool: "{{ item.next_pool | default(omit) }}"
+        comment: "{{ item.next_pool | default(omit) }}"
+  loop:
+    - { name: "{{ dhcp_server.pool_name }}", ranges: "{{ dhcp_server.pool_range }}" }
 
 #/ip dhcp-server
 # add address-pool=dhcp_pool_vlan1 interface=vlan1 lease-time=1h name=dhcp1
-- name: DHCP Server on LAN
+- name: DHCP Server Config
   community.routeros.api_modify:
     path: "ip dhcp-server"
     data:
@@ -54,7 +45,7 @@
 #
 #/ip dhcp-server network
 # add address=xx.xx.xx.xx/24 dns-server=xx.xx.xx.xx gateway=xx.xx.xx.xx
-- name: DHCP Server on LAN
+- name: DHCP Server Network Config
   community.routeros.api_modify:
     path: "ip dhcp-server network"
     data:

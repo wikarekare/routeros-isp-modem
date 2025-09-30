@@ -2,7 +2,7 @@
 # This is the ISP fibre VLAN
 #/ip dhcp-client
 #add interface=vlan10
-- name: VLAN10 DHCP Client Config
+- name: DHCP Client Config
   community.routeros.api_modify:
     path: "ip dhcp-client"
     data:
