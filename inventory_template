@@ -18,3 +18,4 @@ dhcp_range="xx.xx.xx.xx-xx.xx.xx.xx"
 lan_network=xx.xx.xx.xx
 lan_gw=xx.xx.xx.xx
 lan_mask_bits=24
+webserver=xx.xx.xx.xx
