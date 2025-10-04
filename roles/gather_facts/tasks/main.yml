@@ -6,3 +6,4 @@
 - name: Facts
   debug:
     var: routeros_facts.ansible_facts.ansible_net_hostname
+#    var: routeros_facts

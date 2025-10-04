@@ -10,6 +10,8 @@
     ensure_order: true
     path: ip firewall filter
     data: "{{ firewall_rules2 }}"
+
+# Loops don't work with absent handler. Only the last item remains.
 #      - action: "{{ item.action }}"
 #        chain: "{{ item.chain }}"
 #        comment: "{{ item.comment | default(omit) }}"

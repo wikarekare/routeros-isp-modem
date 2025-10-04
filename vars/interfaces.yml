@@ -35,7 +35,8 @@ switch:
 interface_lists:
   - { name: LAN, interface: vlan1 }
   - { name: WAN, interface: vlan10 }
-  - { name: MGMT, interface: "{{ management_interface }}" }
+  - { name: MGMT, interface: bridgeLocal }
+  - { name: MGMT, interface: vlan88 }
 
 poe_interfaces:
   - { name: ether2, poe_out: "off" }
@@ -61,9 +62,17 @@ vlan1:
   network: "{{ lan_network }}"
   mask_bits: "{{ lan_mask_bits }}"
 
+vlan88:
+  name: "vlan88"
+  ip: "{{ mgmt_ip }}"
+  network: "{{ mgmt_network }}"
+  mask_bits: "{{ mgmt_mask_bits }}"
+
 dhcp_server:
   pool_name: "dhcp_pool_vlan1"
   pool_range: "{{ dhcp_range }}"
   network: "{{ vlan1.network }}/{{ vlan1.mask_bits }}"
-  dns_server: "{{ vlan1.ip }}"
+  netmask: "{{ vlan1.mask_bits  }}"
   gateway: "{{ vlan1.ip }}"
+  dns_server: "{{ dns1 }},{{ dns2 }}"
+  ntp_server: "{{ ntp1 }},{{ ntp2 }}"
