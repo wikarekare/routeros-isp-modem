@@ -2,5 +2,10 @@
 # Manually set
 # /ip ssh
 # set host-key-type=ed25519 strong-crypto=yes
-#
-# Want to have our host CA signed cert
+# Want to change this so our host cert is signed cert
+- name: change ssh host key to ed25519
+  community.routeros.api_modify:
+    path: "ip ssh"
+    data:
+      - host-key-type: ed25519
+        strong-crypto: "yes"

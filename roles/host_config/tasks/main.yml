@@ -4,5 +4,5 @@
 - include_tasks: snmp.yml
 - include_tasks: dns.yml
 - include_tasks: disable_services.yml
-# - include_tasks: ssh_ca
+- include_tasks: ssh_ca.yml
 # - include_tasks: ssl_cert

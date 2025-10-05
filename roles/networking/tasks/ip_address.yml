@@ -1,13 +1,34 @@
 ---
 # This is our internal LAN vlan
+- name: build IP settings list
+  ansible.builtin.set_fact:
+    #  - address:
+    #    network:
+    #    interface:
+    #    comment:
+    #    disabled:
+    ip_list: "{{ ip_list | default([]) + [item] }}"
+  loop:
+    - { address: "{{ vlan88.ip }}/{{ vlan88.mask_bits }}", network: "{{ vlan88.network }}", interface: "{{ vlan88.name }}"}
+    - { address: "{{ vlan1.ip }}/{{ vlan1.mask_bits }}", network: "{{ vlan1.network }}", interface: "{{ vlan1.name }}"}
+
+- name: Debug ip_list
+  ansible.builtin.debug:
+    var: ip_list
+
 - name: Interface IP Settings
   community.routeros.api_modify:
+    handle_absent_entries: remove
+    handle_entries_content: remove_as_much_as_possible
     path: "ip address"
-    data:
-      - address: "{{ vlan1.ip }}/{{ vlan1.mask_bits }}"
-        network: "{{ vlan1.network }}"
-        interface: "{{ vlan1.name }}"
-        comment: "{{ item.next_pool | default(omit) }}"
-        disabled: "{{ item.disabled | default(omit) }}"
-  loop:
-    - { address: "{{ vlan1.ip }}/{{ vlan1.mask_bits }}", network: "{{ vlan1.network }}", interface: "{{ vlan1.name }}"}
+    data: "{{ ip_list }}"
+    
+ # Loops don't work with absent handler. Only the last item remains.
+ #     - address: "{{ item.address }}"
+ #       network: "{{ item.network }}"
+ #       interface: "{{ item.interface }}"
+ #       comment: "{{ item.next_pool | default(omit) }}"
+ #       disabled: "{{ item.disabled | default(omit) }}"
+ # loop:
+ #   - { address: "{{ vlan88.ip }}/{{ vlan88.mask_bits }}", network: "{{ vlan88.network }}", interface: "{{ vlan88.name }}"}
+ #   - { address: "{{ vlan1.ip }}/{{ vlan1.mask_bits }}", network: "{{ vlan1.network }}", interface: "{{ vlan1.name }}"}

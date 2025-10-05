@@ -1,114 +1,114 @@
 ---
-# Note for variables with '-'s we have substituted '_' or we get an Ansible error with loops
+# Note for Ansible variables with '-'s we have substituted '_' or we get an Ansible error with loops
 
-mikrotik:
-  # Settings for ethernet interfaces.
-  ethernet_interfaces:
-    - { name: ether2, poe_out: "off" }
-    - { name: ether3, poe_out: "off" }
-    - { name: ether4, poe_out: "off" }
-    - { name: ether5, poe_out: "off" }
-    # - { name: sfp1, auto_negotiation: "no", speed: 1G-baseT-full  }
+# Settings for ethernet interfaces.
+ethernet_interfaces:
+  - { name: ether2, poe_out: "off" }
+  - { name: ether3, poe_out: "off" }
+  - { name: ether4, poe_out: "off" }
+  - { name: ether5, poe_out: "off" }
+  # - { name: sfp1, auto_negotiation: "no", speed: 1G-baseT-full  }
 
-  # Interfaces can be grouped by name for use in some config items
-  interface_lists:
-    - MGMT:
-        - interface: bridgeLocal
-          dhcp:
-            client: true
-        - interface: vlan88
-          vlan_id: 88
-          ip: &mgmt_ip "192.168.88.2"
-          network: "192.168.88.0"
-          mask_bits: "24"
-          gateway: "192.168.88.254"
-          dhcp:
-            server:
-              range: "192.168.88.100-192.168.88.200"
-              dns_server: *mgmt_ip
-              gateway: *mgmt_ip
-    #
-    - LAN:
-        - interface: vlan1
-          vlan_id: 1
-          ip: &lan_ip "{{ lan_ip }}"
-          network: "{{ lan_network }}"
-          mask_bits: "{{ lan_mask_bits }}"
-          gateway: &lan_gw "{{ lan_gw }}"
-          dhcp:
-            server:
-              range: "{{ dhcp_range }}"
-              dns_server: *lan_ip
-              gateway: *lan_ip
-          routes:
-          # Routes to stop private network IPs trying to route to world
-          - { dst_address: "10.0.0.0/8", gateway: *lan_gw }
-          - { dst_address: "172.16.0.0/12", gateway: *lan_gw }
-          - { dst_address: "169.254.0.0/16", gateway: *lan_gw }
-          - { dst_address: "100.64.0.0/22", gateway: *lan_gw }
-    #
-    - WAN:
-        - interface: vlan10
-          vlan_id: 10
-          dhcp:
-            client: true
+# Interfaces can be grouped by name for use in some config items
+interface_lists:
+  - MGMT:
+      # Physical Management interface
+      - interface: bridgeLocal
+        dhcp:
+          client: true
+      # Virtual management interface
+      - interface: vlan88
+        vlan_id: 88
+        ip: &mgmt_ip "{{ mgmt_ip }}"
+        network: "{{ mgmt_network }}"
+        mask_bits: "{{ mgmt_mask_bits }}"
+        #dhcp:
+        #  server:
+        #    range: "{{ mgmt_dhcp_range }}"
+        #    dns_server: *mgmt_ip
+  #
+  - LAN:
+      - interface: vlan1
+        vlan_id: 1
+        ip: &lan_ip "{{ lan_ip }}"
+        network: "{{ lan_network }}"
+        mask_bits: "{{ lan_mask_bits }}"
+        gateway: &lan_gw "{{ lan_gw }}"
+        dhcp:
+          server:
+            range: "{{ dhcp_range }}"
+            dns_server: *lan_ip
+            gateway: *lan_ip
+        routes:
+        # Routes to stop private network IPs trying to route to world
+        - { dst_address: "10.0.0.0/8", gateway: *lan_gw }
+        - { dst_address: "172.16.0.0/12", gateway: *lan_gw }
+        - { dst_address: "169.254.0.0/16", gateway: *lan_gw }
+        - { dst_address: "100.64.0.0/22", gateway: *lan_gw }
+  #
+  - WAN:
+      - interface: vlan10
+        vlan_id: 10
+        dhcp:
+          client: true
 
-  bridge:
-    # Default configuration
-    - name: "bridgeLocal"
-      switch_mac: "{{ def_switch_mac }}"
-      comment: defconf
-      interfaces:
-        # Left ether5 on the default bridge during configuration.
-        - { interface: ether5 }
-        - { interface: sfp1 }
-    # New bridge for our setup
-    - name: "bridge1"
-      comment: "switch"
-      switch_mac: "{{ br1_switch_mac }}"
-      interfaces:
-        - { interface: ether1, hw: "yes" }
-        - { interface: ether2, hw: "yes" }
-        - { interface: ether3, hw: "yes" }
-        - { interface: ether4, hw: "yes" }
-        # - { interface: ether5, hw: "yes" }
-      interface_vlans:
-        - { vlan_id: "1", untagged_ports: "ether2,ether3,ether4,switch1-cpu" }
-        - { vlan_id: "10", tagged_ports: "ether1,switch1-cpu" }
-        - { vlan_id: "88", tagged_ports: "ether2,ether3,ether4,switch1-cpu" }
+bridge:
+  # Default configuration
+  - name: "bridgeLocal"
+    switch_mac: "{{ def_switch_mac }}"
+    comment: defconf
+    interfaces:
+      # Left ether5 on the default bridge during configuration.
+      - { interface: ether5 }
+      - { interface: sfp1 }
+  # New bridge for our setup
+  - name: "bridge1"
+    comment: "switch"
+    switch_mac: "{{ br1_switch_mac }}"
+    interfaces:
+      - { interface: ether1, hw: "yes" }
+      - { interface: ether2, hw: "yes" }
+      - { interface: ether3, hw: "yes" }
+      - { interface: ether4, hw: "yes" }
+      # - { interface: ether5, hw: "yes" }
+    interface_vlans:
+      - { vlan_id: "1", untagged_ports: "ether1,ether2,ether3,switch1-cpu" }
+      - { vlan_id: "10", tagged_ports: "ether4,switch1-cpu" }
+      - { vlan_id: "88", tagged_ports: "ether1,ether2,ether3,switch1-cpu" }
 
-  # Repeat bridge settings for switch (look at merging with brige.interface_vlans)
-  switch:
-    - { default_vlan_id: "10", port: "ether1", vlan_mode: "secure", vlan_header: "leave-as-is" }
-    # LAN ports are untagged vlan 1
-    - { default_vlan_id: "1", port: "ether2", vlan_mode: "fallback", vlan_header: "leave-as-is" }
-    - { default_vlan_id: "1", port: "ether3", vlan_mode: "fallback", vlan_header: "leave-as-is" }
-    - { default_vlan_id: "1", port: "ether4", vlan_mode: "fallback", vlan_header: "leave-as-is" }
-    # Don't break management access
-    - { port: "ether5", vlan_mode: "fallback", vlan_header: "leave-as-is" }
-    - { port: "switch1-cpu", vlan_mode: "fallback", vlan_header: "leave-as-is" }
+# Repeat bridge settings for switch (look at merging with brige.interface_vlans)
+switch:
+  # LAN ports are untagged vlan 1
+  - { default_vlan_id: "1", port: "ether1", vlan_mode: "fallback", vlan_header: "leave-as-is" }
+  - { default_vlan_id: "1", port: "ether2", vlan_mode: "fallback", vlan_header: "leave-as-is" }
+  - { default_vlan_id: "1", port: "ether3", vlan_mode: "fallback", vlan_header: "leave-as-is" }
+  # WAN ports are tagged vlan 10
+  - { default_vlan_id: "10", port: "ether4", vlan_mode: "secure", vlan_header: "leave-as-is" }
+  # Don't break management access
+  - { port: "ether5", vlan_mode: "fallback", vlan_header: "leave-as-is" }
+  - { port: "switch1-cpu", vlan_mode: "fallback", vlan_header: "leave-as-is" }
 
-  discovery_protocol:
-    protocol: "lldp"
-    interface_list: LAN
+discovery_protocol:
+  protocol: "lldp"
+  interface_list: LAN
 
-  # Note for variables with '-'s we have substituted '_' or we get an Ansible error with loops
-  firewall_rules:
-    # input chain
-    - { action: accept, chain: input, comment: "accept established,related,untracked", connection_state: "established,related,untracked" }
-    - { action: drop, chain: input, comment: "drop invalid", connection_state: "invalid" }
-    - { action: accept, chain: input, comment: "accept ICMP", protocol: icmp }
-    - { action: accept, chain: input, comment: "accept to local loopback (for CAPsMAN)", dst_address: "127.0.0.1" }
-    - { action: accept, chain: input, comment: "Allow Management Port", in_interface_list: "MGMT" }
-    - { action: drop, chain: input, comment: "drop all not coming from LAN", in_interface_list: "!LAN" }
-    # Forward chain
-    - { action: accept, chain: forward, comment: "accept in ipsec policy", ipsec_policy: "in,ipsec" }
-    - { action: accept, chain: forward, comment: "accept out ipsec policy", ipsec_policy: "out,ipsec" }
-    # the following rule get duplicated every run
-    - { action: "fasttrack-connection", chain: forward, comment: "fasttrack", connection_state: "established,related", hw_offload: "yes"}
-    - { action: accept, chain: forward, comment: "accept established,related,untracked", connection_state: "established,related,untracked" }
-    - { action: drop, chain: forward, comment: "drop invalid", connection_state: "invalid" }
-    - { action: drop, chain: forward, comment: "drop all from WAN not DSTNATed", connection_nat_state: "!dstnat", connection_state: "new", in_interface_list: "WAN" }
-
-  nat_rules:
-    - { action: masquerade, chain: srcnat, comment: "masquerade", ipsec_policy: "out,none", out_interface_list: "WAN" }
+firewall_rules2:
+  # input chain
+  - { action: accept, chain: input, comment: "accept established,related,untracked", connection-state: "established,related,untracked" }
+  - { action: drop, chain: input, comment: "drop invalid", connection-state: "invalid" }
+  - { action: accept, chain: input, comment: "accept ICMP", protocol: icmp }
+  - { action: accept, chain: input, comment: "accept to local loopback (for CAPsMAN)", dst-address: "127.0.0.1" }
+  - { action: accept, chain: input, comment: "Allow Management Port", in-interface-list: "MGMT" }
+  - { action: drop, chain: input, comment: "drop all not coming from LAN", in-interface-list: "!LAN" }
+  # Forward chain
+  - { action: accept, chain: forward, comment: "accept in ipsec policy", ipsec-policy: "in,ipsec" }
+  - { action: accept, chain: forward, comment: "accept out ipsec policy", ipsec-policy: "out,ipsec" }
+  # the following rule get duplicated every run
+  - { action: "fasttrack-connection", chain: forward, comment: "fasttrack", connection-state: "established,related", hw-offload: "yes"}
+  - { action: accept, chain: forward, comment: "accept established,related,untracked", connection-state: "established,related,untracked" }
+  - { action: drop, chain: forward, comment: "drop invalid", connection-state: "invalid" }
+  - { action: drop, chain: forward, comment: "drop all from WAN not DSTNATed", connection-nat-state: "!dstnat", connection-state: "new", in-interface-list: "WAN" }
+nat_rules2:
+  - { action: masquerade, chain: srcnat, comment: "masquerade", ipsec-policy: "out,none", out-interface-list: "WAN" }
+  - { action: dst-nat, chain: dstnat, in-interface-list: "WAN", comment: http, protocol: tcp, src-port: 80, to-addresses: "{{webserver}}", to-ports: 80 }
+  - { action: dst-nat, chain: dstnat, in-interface-list: "WAN", comment: http, protocol: tcp, src-port: 443, to-addresses: "{{webserver}}", to-ports: 443 }

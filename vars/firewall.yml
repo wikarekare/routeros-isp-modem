@@ -1,19 +1,20 @@
-# Note for variables with '-'s we have substituted '_' or we get an Ansible error with loops
-firewall_rules:
+firewall_rules2:
   # input chain
-  - { action: accept, chain: input, comment: "accept established,related,untracked", connection_state: "established,related,untracked" }
-  - { action: drop, chain: input, comment: "drop invalid", connection_state: "invalid" }
+  - { action: accept, chain: input, comment: "accept established,related,untracked", connection-state: "established,related,untracked" }
+  - { action: drop, chain: input, comment: "drop invalid", connection-state: "invalid" }
   - { action: accept, chain: input, comment: "accept ICMP", protocol: icmp }
-  - { action: accept, chain: input, comment: "accept to local loopback (for CAPsMAN)", dst_address: "127.0.0.1" }
-  - { action: accept, chain: input, comment: "Allow Management Port", in_interface_list: "MGMT" }
-  - { action: drop, chain: input, comment: "drop all not coming from LAN", in_interface_list: "!LAN" }
+  - { action: accept, chain: input, comment: "accept to local loopback (for CAPsMAN)", dst-address: "127.0.0.1" }
+  - { action: accept, chain: input, comment: "Allow Management Port", in-interface-list: "MGMT" }
+  - { action: drop, chain: input, comment: "drop all not coming from LAN", in-interface-list: "!LAN" }
   # Forward chain
-  - { action: accept, chain: forward, comment: "accept in ipsec policy", ipsec_policy: "in,ipsec" }
-  - { action: accept, chain: forward, comment: "accept out ipsec policy", ipsec_policy: "out,ipsec" }
+  - { action: accept, chain: forward, comment: "accept in ipsec policy", ipsec-policy: "in,ipsec" }
+  - { action: accept, chain: forward, comment: "accept out ipsec policy", ipsec-policy: "out,ipsec" }
   # the following rule get duplicated every run
-  - { action: "fasttrack-connection", chain: forward, comment: "fasttrack", connection_state: "established,related", hw_offload: "yes"}
-  - { action: accept, chain: forward, comment: "accept established,related,untracked", connection_state: "established,related,untracked" }
-  - { action: drop, chain: forward, comment: "drop invalid", connection_state: "invalid" }
-  - { action: drop, chain: forward, comment: "drop all from WAN not DSTNATed", connection_nat_state: "!dstnat", connection_state: "new", in_interface_list: "WAN" }
-nat_rules:
-  - { action: masquerade, chain: srcnat, comment: "masquerade", ipsec_policy: "out,none", out_interface_list: "WAN" }
+  - { action: "fasttrack-connection", chain: forward, comment: "fasttrack", connection-state: "established,related", hw-offload: "yes"}
+  - { action: accept, chain: forward, comment: "accept established,related,untracked", connection-state: "established,related,untracked" }
+  - { action: drop, chain: forward, comment: "drop invalid", connection-state: "invalid" }
+  - { action: drop, chain: forward, comment: "drop all from WAN not DSTNATed", connection-nat-state: "!dstnat", connection-state: "new", in-interface-list: "WAN" }
+nat_rules2:
+  - { action: masquerade, chain: srcnat, comment: "masquerade", ipsec-policy: "out,none", out-interface-list: "WAN" }
+  - { action: dst-nat, chain: dstnat, in-interface-list: "WAN", comment: http, protocol: tcp, src-port: 80, to-addresses: "{{webserver}}", to-ports: 80 }
+  - { action: dst-nat, chain: dstnat, in-interface-list: "WAN", comment: http, protocol: tcp, src-port: 443, to-addresses: "{{webserver}}", to-ports: 443 }

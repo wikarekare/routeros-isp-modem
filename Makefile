@@ -4,10 +4,16 @@
 # Basic networking must be setup, so you packages can be fetched
 # SSH, with keys, needs to be set up, so ansible can connect.
 #
-default: run
 
+# Default is to check, but not make changes
 check:
-	ansible-playbook --check -i inventory playbook.yml
+	ansible-playbook --check -i inventory.yml fibre01-playbook.yml
+	ansible-playbook --check -i inventory.yml fibre02-playbook.yml
 
-run:
-	ansible-playbook -i inventory playbook.yml
+all: fibre01 fibre02
+
+fibre01:
+	ansible-playbook -i inventory.yml fibre01-playbook.yml
+
+fibre02:
+	ansible-playbook -i inventory.yml fibre02-playbook.yml
