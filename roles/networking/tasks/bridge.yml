@@ -7,37 +7,52 @@
 #    set:
 #      name: "{{ bridge.name }}"
 
-# Switch ports are connected to this bridge
+- name: build bridge settings list
+  ansible.builtin.set_fact:
+    bridge_list: >
+      {{
+        bridge_list | default([])
+        + [item  | ansible.utils.remove_keys(['interfaces', 'interface_vlans']) ]
+      }}
+  loop: "{{ bridge }}"
+
+- name: Debug bridge list
+  ansible.builtin.debug:
+    var: bridge_list
+
 # Default bridge1 already exists, so don't bother with this step
 # - name: create bridge for hardware switch
 # /interface bridge
 #   add name=bridge1
-- name: Create bridge interface with bridge vlan filtering untouched
+- name: Create bridge interface
   community.routeros.api_modify:
+    handle_absent_entries: remove
+    handle_entries_content: remove_as_much_as_possible
     path: "interface bridge"
-    data:
-      - name: "{{ item.name }}"
-        admin-mac: "{{ item.admin_mac | default(omit) }}"
-        ageing-time: "{{ item.ageing_time | default(omit) }}"
-        arp: "{{ item.arp | default(omit) }}"
-        arp-timeout: "{{ item.arp_timeout | default(omit) }}"
-        auto-mac: "{{ item.auto_mac | default(omit) }}"
-        comment: "{{ item.comment | default(omit) }}"
-        dhcp-snooping: "{{ item.dhcp_snooping | default(omit) }}"
-        disabled: "{{ item.disabled | default(omit) }}"
-        ether-type: "{{ item.ether_type | default(omit) }}"
-        fast-forward: "{{ item.fast_forward | default(omit) }}"
-        forward-delay: "{{ item.forward_delay | default(omit) }}"
-        frame-types: "{{ item.frame_types | default(omit) }}"
-        igmp-snooping: "{{ item.igmp_snooping | default(omit) }}"
-        max-message-age: "{{ item.max_message_age | default(omit) }}"
-        mld-version: "{{ item.mld_version | default(omit) }}"
-        mtu: "{{ item.mtu | default(omit) }}"
-        multicast-querier: "{{ item.multicast_querier | default(omit) }}"
-        priority: "{{ item.priority | default(omit) }}"
-        protocol-mode: "{{ item.protocol_mode | default(omit) }}"
-        pvid: "{{ item.pvid | default(omit) }}"
-        transmit-hold-count: "{{ item.transmit_hold_count | default(omit) }}"
-        vlan-filtering: "{{ item.vlan_filtering | default(omit) }}"
-  loop:
-    - { name: "{{ bridge.name }}", comment: "{{ bridge.comment }}", admin_mac: "{{ bridge.switch_mac }}", auto_mac: "no", vlan_filtering: "yes" }
+    data:  "{{ bridge_list }}"
+
+   #   - name: "{{ item.name }}"
+   #     admin-mac: "{{ item['admin-mac'] | default(omit) }}"
+   #     ageing-time: "{{ item['ageing-time'] | default(omit) }}"
+   #     arp: "{{ item.arp | default(omit) }}"
+   #     arp-timeout: "{{ item['arp-timeout'] | default(omit) }}"
+   #     auto-mac: "{{ item['auto-mac'] | default(omit) }}"
+   #     comment: "{{ item.comment | default(omit) }}"
+   #     dhcp-snooping: "{{ item['dhcp-snooping'] | default(omit) }}"
+   #     disabled: "{{ item.disabled | default(omit) }}"
+   #     ether-type: "{{ item['ether-type'] | default(omit) }}"
+   #     fast-forward: "{{ item['fast-forward'] | default(omit) }}"
+   #     forward-delay: "{{ item['forward-delay'] | default(omit) }}"
+   #     frame-types: "{{ item['frame-types'] | default(omit) }}"
+   #     igmp-snooping: "{{ item['igmp-snooping'] | default(omit) }}"
+   #     max-message-age: "{{ item['max-message-age'] | default(omit) }}"
+   #     mld-version: "{{ item['mld-version'] | default(omit) }}"
+   #     mtu: "{{ item.mtu | default(omit) }}"
+   #     multicast-querier: "{{ item['multicast-querier'] | default(omit) }}"
+   #     priority: "{{ item.priority | default(omit) }}"
+   #     protocol-mode: "{{ item['protocol-mode'] | default(omit) }}"
+   #     pvid: "{{ item.pvid | default(omit) }}"
+   #     transmit-hold-count: "{{ item['transmit-hold-count'] | default(omit) }}"
+   #     vlan-filtering: "{{ item['vlan-filtering'] | default(omit) }}"
+ # loop:
+ #   - { name: "{{ bridge.name }}", comment: "{{ bridge.comment }}", admin_mac: "{{ bridge.switch_mac }}", auto_mac: "no", vlan_filtering: "yes" }

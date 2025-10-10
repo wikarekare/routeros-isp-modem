@@ -28,7 +28,7 @@ all:
         ntp2: xx.xx.xx.xx
         dns1: xx.xx.xx.xx
         dns2: xx.xx.xx.xx
-        dhcp_range: xx.xx.xx.xx-xx.xx.xx.xx
+        lan_dhcp_range: xx.xx.xx.xx-xx.xx.xx.xx
         lan_network: xx.xx.xx.xx
         lan_gw: xx.xx.xx.xx
         lan_mask_bits: "xx"

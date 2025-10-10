@@ -19,9 +19,9 @@
 - name: Configure Ethernet LAN Switch Port
   community.routeros.api_modify:
     path: "interface ethernet switch port"
-    data:
-      - name: "{{ item.port }}"
-        default-vlan-id: "{{ item.default_vlan_id | default(omit) }}"
-        vlan-header: "{{ item.vlan_header }}"
-        vlan-mode: "{{ item.vlan_mode }}"
-  loop: "{{ switch }}"
+    data: "{{ switch }}"
+ #     - name: "{{ item.port }}"
+ #       default-vlan-id: "{{ item['default-vlan-id'] | default(omit) }}"
+ #       vlan-header: "{{ item['vlan-header'] }}"
+ #       vlan-mode: "{{ item['vlan-mode'] }}"
+ # loop: "{{ switch }}"

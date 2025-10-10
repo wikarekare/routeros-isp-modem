@@ -1,20 +1,62 @@
 ---
 # This is our internal LAN vlan
-- name: build IP settings list
+# also need to loop over bridge and ethernet interfaces, looking for static IP settings.
+- name: build VLAN IP settings ip_list
   ansible.builtin.set_fact:
-    #  - address:
-    #    network:
-    #    interface:
-    #    comment:
-    #    disabled:
-    ip_list: "{{ ip_list | default([]) + [item] }}"
-  loop:
-    - { address: "{{ vlan88.ip }}/{{ vlan88.mask_bits }}", network: "{{ vlan88.network }}", interface: "{{ vlan88.name }}"}
-    - { address: "{{ vlan1.ip }}/{{ vlan1.mask_bits }}", network: "{{ vlan1.network }}", interface: "{{ vlan1.name }}"}
+    ip_list: >
+      {{
+        ip_list | default([]) +
+        [{
+          'interface': item.1.name,
+          'address': item.1.ip_settings.static.ip + '/' + item.1.ip_settings.static.mask_bits,
+          'network': item.1.ip_settings.static.network,
+          'comment': item.1.comment | default(omit),
+          'disabled': item.1.disabled | default(omit)
+        }]
+      }}
+  when: item.1.ip_settings is defined and item.1.ip_settings.static is defined
+  with_subelements:
+    - "{{ bridge }}"
+    - interface_vlans
+    - skip_missing: True
+
+- name: Add Bridge IP settings to ip_list
+  ansible.builtin.set_fact:
+    ip_list: >
+      {{
+        ip_list | default([]) +
+        [{
+          'interface': item.name,
+          'address': item.ip_settings.static.ip + '/' + item.ip_settings.static.mask_bits,
+          'network': item.ip_settings.static.network,
+          'comment': item.comment | default(omit),
+          'disabled': item.disabled | default(omit)
+        }]
+      }}
+  when: item.ip_settings is defined and item.ip_settings.static is defined
+  loop: "{{ bridge }}"
+
+- name: Add ethernet IP settings to ip_list
+  ansible.builtin.set_fact:
+    ip_list: >
+      {{
+        ip_list | default([]) +
+        [{
+          'interface': item.name,
+          'address': item.ip_settings.static.ip + '/' + item.ip_settings.static.mask_bits,
+          'network': item.ip_settings.static.network,
+          'comment': item.comment | default(omit),
+          'disabled': item.disabled | default(omit)
+        }]
+      }}
+  when: item.ip_settings is defined and item.ip_settings.static is defined
+  loop: "{{ ethernet_interfaces }}"
 
 - name: Debug ip_list
   ansible.builtin.debug:
     var: ip_list
+  when: ip_list is defined
+
 
 - name: Interface IP Settings
   community.routeros.api_modify:
@@ -22,13 +64,3 @@
     handle_entries_content: remove_as_much_as_possible
     path: "ip address"
     data: "{{ ip_list }}"
-    
- # Loops don't work with absent handler. Only the last item remains.
- #     - address: "{{ item.address }}"
- #       network: "{{ item.network }}"
- #       interface: "{{ item.interface }}"
- #       comment: "{{ item.next_pool | default(omit) }}"
- #       disabled: "{{ item.disabled | default(omit) }}"
- # loop:
- #   - { address: "{{ vlan88.ip }}/{{ vlan88.mask_bits }}", network: "{{ vlan88.network }}", interface: "{{ vlan88.name }}"}
- #   - { address: "{{ vlan1.ip }}/{{ vlan1.mask_bits }}", network: "{{ vlan1.network }}", interface: "{{ vlan1.name }}"}

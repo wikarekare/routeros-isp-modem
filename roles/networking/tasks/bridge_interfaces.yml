@@ -1,44 +1,52 @@
 ---
 # Routerboard RB960 has QCA8337 for ether1-ether5. SFP1 is connected to the CPU
 
+- name: build bridge settings list
+  ansible.builtin.set_fact:
+    bridge_interfaces: >
+      {{
+        bridge_interfaces | default([])
+        + [ item.1 | combine( { 'bridge': item.0.name } ) ]
+      }}
+  with_subelements:
+    - "{{ bridge }}"
+    - interfaces
+
+- name: Debug bridge Interfaces
+  ansible.builtin.debug:
+    var: bridge_interfaces
+
 # /interface bridge port
-#  add bridge=bridge1 interface=ether1 hw=yes
-#  add bridge=bridge1 interface=ether2 hw=yes
-#  add bridge=bridge1 interface=ether3 hw=yes
-#  add bridge=bridge1 interface=ether4 hw=yes
-#  add bridge=bridge1 interface=ether5 hw=yes
-#  sfp1 is connected to the CPU, yet default config has hw=yes
-#  add bridge=bridge1 interface=sfp1 hw=yes
-# Doesn't look to be a switch1-cpu interface for the bridge. Might be assumed
-# It is on the switch.
-#  add bridge=bridge1 interface=switch1-cpu hw=yes
 - name: Add LAN interfaces to bridge. Want hardware accelleration for bridge1 (looks to be the default)
   community.routeros.api_modify:
+    handle_absent_entries: remove
+    handle_entries_content: remove_as_much_as_possible
     path: "interface bridge port"
-    data:
-      - bridge: "{{ bridge.name }}"
-        interface: "{{ item.interface }}"
-        auto-isolate: "{{ item.auto_isolate | default(omit) }}"
-        bpdu-guard: "{{ item.bpdu_guard | default(omit) }}"
-        broadcast-flood: "{{ item.broadcast_flood | default(omit) }}"
-        comment: "{{ item.comment | default(omit) }}"
-        disabled: "{{ item.disabled | default(omit) }}"
-        edge: "{{ item.edge | default(omit) }}"
-        fast-leave: "{{ item.fast_leave | default(omit) }}"
-        frame-types: "{{ item.frame_types | default(omit) }}"
-        horizon: "{{ item.horizon | default(omit) }}"
-        hw: "{{ item.hw | default(omit) }}"
-        internal-path-cost: "{{ item.internal_path_cost | default(omit) }}"
-        learn: "{{ item.learn | default(omit) }}"
-        multicast-router: "{{ item.multicast_router | default(omit) }}"
-        path-cost: "{{ item.path_cost | default(omit) }}"
-        point-to-point: "{{ item.point_to_point | default(omit) }}"
-        priority: "{{ item.priority | default(omit) }}"
-        pvid: "{{ item.pvid | default(omit) }}"
-        restricted-role: "{{ item.restricted_role | default(omit) }}"
-        restricted-tcn: "{{ item.restricted_tcn | default(omit) }}"
-        tag-stacking: "{{ item.tag_stacking | default(omit) }}"
-        trusted: "{{ item.trusted | default(omit) }}"
-        unknown-multicast-flood: "{{ item.unknown_multicast_flood | default(omit) }}"
-        unknown-unicast-flood: "{{ item.unknown_unicast_flood | default(omit) }}"
-  loop: "{{ bridge.interfaces }}"
+    data: "{{ bridge_interfaces }}"
+
+#      - bridge: "{{ bridge.name }}"
+#        interface: "{{ item.interface }}"
+#        auto-isolate: "{{ item['auto-isolate'] | default(omit) }}"
+#        bpdu-guard: "{{ item['bpdu-guard'] | default(omit) }}"
+#        broadcast-flood: "{{ item['broadcast-flood'] | default(omit) }}"
+#        comment: "{{ item.comment | default(omit) }}"
+#        disabled: "{{ item.disabled | default(omit) }}"
+#        edge: "{{ item.edge | default(omit) }}"
+#        fast-leave: "{{ item['fast-leave'] | default(omit) }}"
+#        frame-types: "{{ item['frame-types'] | default(omit) }}"
+#        horizon: "{{ item.horizon | default(omit) }}"
+#        hw: "{{ item.hw | default(omit) }}"
+#        internal-path-cost: "{{ item['internal-path-cost'] | default(omit) }}"
+#        learn: "{{ item.learn | default(omit) }}"
+#        multicast-router: "{{ item['multicast-router'] | default(omit) }}"
+#        path-cost: "{{ item['path-cost'] | default(omit) }}"
+#        point-to-point: "{{ item['point-to-point'] | default(omit) }}"
+#        priority: "{{ item.priority | default(omit) }}"
+#        pvid: "{{ item.pvid | default(omit) }}"
+#        restricted-role: "{{ item['restricted-role'] | default(omit) }}"
+#        restricted-tcn: "{{ item['restricted-tcn'] | default(omit) }}"
+#        tag-stacking: "{{ item['tag-stacking'] | default(omit) }}"
+#        trusted: "{{ item.trusted | default(omit) }}"
+#        unknown-multicast-flood: "{{ item['unknown-multicast-flood'] | default(omit) }}"
+#        unknown-unicast-flood: "{{ item['unknown-unicast-flood'] | default(omit) }}"
+#  loop: "{{ bridge.interfaces }}"

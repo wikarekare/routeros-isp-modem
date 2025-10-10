@@ -1,16 +1,42 @@
 ---
+
+- name: build interface list
+  ansible.builtin.set_fact:
+    interface_list_t: >
+      {{
+        interface_list_t | default([])
+        + [ item | ansible.utils.remove_keys(['interfaces']) ]
+      }}
+  loop: "{{ interface_list }}"
+
+- name: Debug bridge list
+  ansible.builtin.debug:
+    var: interface_list_t
+
 #/interface list
 # add name=WAN
 # add name=LAN
 - name: Interface List Settings
   community.routeros.api_modify:
     path: "interface list"
-    data:
-      - name: "{{ item.name }}"
-        comment: "{{ item.comment | default(omit) }}"
-        exclude: "{{ item.exclude | default(omit) }}"
-        include: "{{ item.include | default(omit) }}"
-  loop: "{{ interface_lists }}"
+    data: "{{ interface_list_t }}"
+#      - name: "{{ item.name }}"
+#        comment: "{{ item.comment | default(omit) }}"
+#        exclude: "{{ item.exclude | default(omit) }}"
+#        include: "{{ item.include | default(omit) }}"
+#  loop: "{{ interface_list_t }}"
+
+- name: build interface list members
+  ansible.builtin.set_fact:
+    interface_list_members: >
+      {{
+        interface_list_members | default([])
+        + [ item.1 | combine( { 'list': item.0.name } ) ]
+      }}
+  with_subelements:
+    - "{{ interface_list }}"
+    - interfaces
+    - skip_missing: True
 
 # WARNING. This step looks to be breaking connectivity
 # unless networking is set up on these vlans
@@ -20,9 +46,10 @@
 - name: Interface List Members
   community.routeros.api_modify:
     path: "interface list member"
-    data:
-      - list: "{{ item.name }}"
-        interface: "{{ item.interface }}"
-        comment: "{{ item.comment | default(omit) }}"
-        disabled: "{{ item.disabled | default(omit) }}"
-  loop: "{{ interface_lists }}"
+    data: "{{ interface_list_members }}"
+
+#      - list: "{{ item.name }}"
+#        interface: "{{ item.interface }}"
+#        comment: "{{ item.comment | default(omit) }}"
+#        disabled: "{{ item.disabled | default(omit) }}"
+#  loop: "{{ interface_lists }}"

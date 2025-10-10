@@ -3,68 +3,41 @@
 
 # Settings for ethernet interfaces.
 ethernet_interfaces:
-  - { name: ether2, poe_out: "off" }
-  - { name: ether3, poe_out: "off" }
-  - { name: ether4, poe_out: "off" }
-  - { name: ether5, poe_out: "off" }
-  # - { name: sfp1, auto_negotiation: "no", speed: 1G-baseT-full  }
+  - name: ether2
+    poe-out: "off"
+  - name: ether3
+    poe-out: "off"
+  - name: ether4
+    poe-out: "off"
+  - name: ether5
+    poe-out: "off"
+    ip_settings:
+    #  static: ...
+    #   dhcp_client:
+    #     comment: "Ether5 DHCP Client"
+  # - { name: sfp1, auto-negotiation: "no", speed: 1G-baseT-full  }
 
-# Interfaces can be grouped by name for use in some config items
-interface_lists:
-  - MGMT:
-      # Physical Management interface
-      - interface: bridgeLocal
-        dhcp:
-          client: true
-      # Virtual management interface
-      - interface: vlan88
-        vlan_id: 88
-        ip: &mgmt_ip "{{ mgmt_ip }}"
-        network: "{{ mgmt_network }}"
-        mask_bits: "{{ mgmt_mask_bits }}"
-        #dhcp:
-        #  server:
-        #    range: "{{ mgmt_dhcp_range }}"
-        #    dns_server: *mgmt_ip
-  #
-  - LAN:
-      - interface: vlan1
-        vlan_id: 1
-        ip: &lan_ip "{{ lan_ip }}"
-        network: "{{ lan_network }}"
-        mask_bits: "{{ lan_mask_bits }}"
-        gateway: &lan_gw "{{ lan_gw }}"
-        dhcp:
-          server:
-            range: "{{ dhcp_range }}"
-            dns_server: *lan_ip
-            gateway: *lan_ip
-        routes:
-        # Routes to stop private network IPs trying to route to world
-        - { dst_address: "10.0.0.0/8", gateway: *lan_gw }
-        - { dst_address: "172.16.0.0/12", gateway: *lan_gw }
-        - { dst_address: "169.254.0.0/16", gateway: *lan_gw }
-        - { dst_address: "100.64.0.0/22", gateway: *lan_gw }
-  #
-  - WAN:
-      - interface: vlan10
-        vlan_id: 10
-        dhcp:
-          client: true
-
+# Mikrotik bridge is a vlan capable switch
+# It is not a Linux style bridge, which is a dumb switch
 bridge:
   # Default configuration
   - name: "bridgeLocal"
-    switch_mac: "{{ def_switch_mac }}"
-    comment: defconf
+    comment: "defcon Physical Management interface"
+    admin-mac: "{{ def_switch_mac }}"
+    auto-mac: "no"
+    ip_settings:
+      dhcp_client:
+        comment: "Defconf"
     interfaces:
       # Left ether5 on the default bridge during configuration.
       - { interface: ether5 }
       - { interface: sfp1 }
+    interface_vlans: []
   # New bridge for our setup
   - name: "bridge1"
+    admin-mac: "{{ br1_switch_mac }}"
+    auto-mac: "no"
     comment: "switch"
-    switch_mac: "{{ br1_switch_mac }}"
     interfaces:
       - { interface: ether1, hw: "yes" }
       - { interface: ether2, hw: "yes" }
@@ -72,27 +45,106 @@ bridge:
       - { interface: ether4, hw: "yes" }
       # - { interface: ether5, hw: "yes" }
     interface_vlans:
-      - { vlan_id: "1", untagged_ports: "ether1,ether2,ether3,switch1-cpu" }
-      - { vlan_id: "10", tagged_ports: "ether4,switch1-cpu" }
-      - { vlan_id: "88", tagged_ports: "ether1,ether2,ether3,switch1-cpu" }
+      - name: vlan1
+        vlan-ids: "1"
+        comment: "Default LAN vlan"
+        mtu: 1500
+        untagged: "ether1,ether2,ether3,switch1-cpu"
+        ip_settings:
+          static:
+            ip: &lan_ip "{{ lan_ip }}"
+            network: "{{ lan_network }}"
+            mask_bits: "{{ lan_mask_bits }}"
+            gateway: &lan_gw "{{ lan_gw }}"
+        dhcp_server:
+          comment: "LAN"
+          range: "{{ lan_dhcp_range }}"
+          dns_server: *lan_ip
+          gateway: *lan_ip
+      - name: vlan10
+        vlan-ids: "10"
+        comment: "ISP WAN vlan"
+        tagged: "ether4,switch1-cpu"
+        ip_settings:
+          dhcp_client:
+      - name: vlan88
+        vlan-ids: "88"
+        comment: "Management vlan"
+        mtu: 1500
+        tagged: "ether1,ether2,ether3,switch1-cpu"
+        ip_settings:
+          static:
+            ip: &mgmt_ip "{{ mgmt_ip }}"
+            network: "{{ mgmt_network }}"
+            mask_bits: "{{ mgmt_mask_bits }}"
+        # dhcp_server:
+        #   range: "{{ mgmt_dhcp_range }}"
+        #   dns_server: *mgmt_ip
 
 # Repeat bridge settings for switch (look at merging with brige.interface_vlans)
+# Setting for the hardware based switch in our router
 switch:
   # LAN ports are untagged vlan 1
-  - { default_vlan_id: "1", port: "ether1", vlan_mode: "fallback", vlan_header: "leave-as-is" }
-  - { default_vlan_id: "1", port: "ether2", vlan_mode: "fallback", vlan_header: "leave-as-is" }
-  - { default_vlan_id: "1", port: "ether3", vlan_mode: "fallback", vlan_header: "leave-as-is" }
+  - { default-vlan-id: "1", port: "ether1", vlan-mode: "fallback", vlan-header: "leave-as-is" }
+  - { default-vlan-id: "1", port: "ether2", vlan-mode: "fallback", vlan-header: "leave-as-is" }
+  - { default-vlan-id: "1", port: "ether3", vlan-mode: "fallback", vlan-header: "leave-as-is" }
   # WAN ports are tagged vlan 10
-  - { default_vlan_id: "10", port: "ether4", vlan_mode: "secure", vlan_header: "leave-as-is" }
+  - { default-vlan-id: "10", port: "ether4", vlan-mode: "secure", vlan-header: "leave-as-is" }
   # Don't break management access
-  - { port: "ether5", vlan_mode: "fallback", vlan_header: "leave-as-is" }
-  - { port: "switch1-cpu", vlan_mode: "fallback", vlan_header: "leave-as-is" }
+  - { port: "ether5", vlan-mode: "fallback", vlan-header: "leave-as-is" }
+  - { port: "switch1-cpu", vlan-mode: "fallback", vlan-header: "leave-as-is" }
+
+routes:
+# Routes to stop private network IPs trying to route to world
+- { dst-address: "10.0.0.0/8", gateway: *lan_gw }
+- { dst-address: "172.16.0.0/12", gateway: *lan_gw }
+- { dst-address: "169.254.0.0/16", gateway: *lan_gw }
+- { dst-address: "100.64.0.0/22", gateway: *lan_gw }
 
 discovery_protocol:
-  protocol: "lldp"
-  interface_list: LAN
+  - discover-interface-list: LAN
+    protocol: "lldp"
 
-firewall_rules2:
+services:
+ - { name: "telnet", disabled: "yes" }
+ - { name: "ftp", disabled: "yes" }
+ - { name: "winbox", disabled: "yes" }
+
+snmp:
+  config:
+    - enabled: "yes"
+      contact: "Rob Burrowes, rob@wikarekare.org"
+      location: "OceanView Cabinet"
+  community:
+    - { name: "public", read-access: "no", write-access: "no" }
+    - { name: "wikk_ovc_ro", read-access: "yes", write-access: "no", addresses: "{{ lan_network }}/{{ lan_mask_bits }}" }
+
+ssh:
+  host_ca:
+    - host-key-type: ed25519
+      strong-crypto: "yes"
+
+timezone: Pacific/Auckland
+
+# Interfaces can be grouped by name for use in some config items
+interface_list:
+  - name: MGMT
+    comment: 'Management interfaces'
+    interfaces:
+      - name: bridgeLocal
+      - name: vlan88
+    #
+  - name: LAN
+    comment: LAN
+    interfaces:
+      - name: vlan1
+  #
+  - name: WAN
+    comment: ISP
+    interfaces:
+      - name: vlan10
+
+firewall_rules:
   # input chain
   - { action: accept, chain: input, comment: "accept established,related,untracked", connection-state: "established,related,untracked" }
   - { action: drop, chain: input, comment: "drop invalid", connection-state: "invalid" }
@@ -108,7 +160,8 @@ firewall_rules2:
   - { action: accept, chain: forward, comment: "accept established,related,untracked", connection-state: "established,related,untracked" }
   - { action: drop, chain: forward, comment: "drop invalid", connection-state: "invalid" }
   - { action: drop, chain: forward, comment: "drop all from WAN not DSTNATed", connection-nat-state: "!dstnat", connection-state: "new", in-interface-list: "WAN" }
-nat_rules2:
+
+nat_rules:
   - { action: masquerade, chain: srcnat, comment: "masquerade", ipsec-policy: "out,none", out-interface-list: "WAN" }
   - { action: dst-nat, chain: dstnat, in-interface-list: "WAN", comment: http, protocol: tcp, src-port: 80, to-addresses: "{{webserver}}", to-ports: 80 }
   - { action: dst-nat, chain: dstnat, in-interface-list: "WAN", comment: http, protocol: tcp, src-port: 443, to-addresses: "{{webserver}}", to-ports: 443 }

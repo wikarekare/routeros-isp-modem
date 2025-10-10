@@ -2,15 +2,48 @@
 #/interface bridge vlan
 #add bridge=bridge1 tagged=ether4 vlan-ids=10
 #add bridge=bridge1 untagged=ether1,ether2,ether3 vlan-ids=1
+
+- name: build bridge vlans list
+  ansible.builtin.set_fact:
+    #      bridge: "{{ item.bridge }}"
+    #      vlan-ids: "{{ item['vlan-id'] }}"
+    #      tagged: "{{ item.tagged | default(omit) }}" # Use omit if tagged is not always present
+    #      untagged: "{{ item.untagged | default(omit) }}" # Use omit if untagged is not always present
+    #      comment: "{{ item.comment | default(omit) }}"
+    bridge_interface_vlans: >
+      {{
+        bridge_interface_vlans | default([]) +
+        [
+          item.1 | dict2items
+          | selectattr('key', 'in', ['vlan-ids','tagged','untagged','comment'])
+          | items2dict
+          | combine( { 'bridge': item.0.name } )
+        ]
+      }}
+  with_subelements:
+    - "{{ bridge }}"
+    - interface_vlans
+    - skip_missing: True
+
+- name: Debug bridge Interface vlans
+  ansible.builtin.debug:
+    var: bridge_interface_vlans
+
 - name: Configure VLANs on the bridge
-  community.routeros.api_find_and_modify:
+  community.routeros.api_modify:
+    handle_absent_entries: remove
+    handle_entries_content: remove_as_much_as_possible
     path: "interface bridge vlan"
-    find:
-      vlan-ids: "{{ item.vlan_id }}"
-    values:
-      bridge: "{{ bridge.name }}"
-      vlan-ids: "{{ item.vlan_id }}"
-      tagged: "{{ item.tagged_ports | default(omit) }}"
-      untagged: "{{ item.untagged_ports | default(omit) }}" # Use omit if untagged is not always present
-      comment: "{{ item.comment | default(omit) }}"
-  loop: "{{ bridge.interface_vlans }}"
+    data: "{{ bridge_interface_vlans }}"
+
+#   community.routeros.api_find_and_modify:
+#   path: "interface bridge vlan"
+#    find:
+#      vlan-ids: "{{ item['vlan-id'] }}"
+#    values:
+#      bridge: "{{ item.bridge }}"
+#      vlan-ids: "{{ item['vlan-id'] }}"
+#      tagged: "{{ item.tagged | default(omit) }}" # Use omit if tagged is not always present
+#      untagged: "{{ item.untagged | default(omit) }}" # Use omit if untagged is not always present
+#      comment: "{{ item.comment | default(omit) }}"
+#  loop: "{{ bridge_interface_vlans }}"

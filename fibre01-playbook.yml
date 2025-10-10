@@ -19,8 +19,7 @@
     routeros_hostname: fibre01
     routeros_domainname: wikarekare.org
   vars_files:
-    - vars/interfaces.yml
-    - vars/firewall.yml
+    - vars/combined.yml
 
   #  tasks:
   #    - name: Gather facts

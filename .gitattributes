@@ -1,3 +1,4 @@
 .gitattributes !filter !diff
 inventory filter=git-crypt diff=git-crypt
 inventory.yml filter=git-crypt diff=git-crypt
+vars/private.yml filter=git-crypt diff=git-crypt

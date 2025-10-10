@@ -6,6 +6,4 @@
 - name: change ssh host key to ed25519
   community.routeros.api_modify:
     path: "ip ssh"
-    data:
-      - host-key-type: ed25519
-        strong-crypto: "yes"
+    data: "{{ ssh.host_ca }}"

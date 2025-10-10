@@ -1,19 +1,69 @@
 ---
-# This is the ISP fibre VLAN
+# also need to loop over bridge and ethernet interfaces, looking for static IP settings.
+- name: build VLAN IP settings dhcp_client_list
+  ansible.builtin.set_fact:
+#     interface: "{{ item.interface }}"
+#     add-default-route: "{{ item['add-default-route'] | default(omit) }}"
+#     comment: "{{ item.comment | default(omit) }}"
+#     default-route-distance: "{{ item['default-route-distance'] | default(omit) }}"
+#     dhcp-options: "{{ item['dhcp-options'] | default(omit) }}"
+#     disabled: "{{ item.disabled | default(omit) }}"
+#     script: "{{ item.script | default(omit) }}"
+#     use-peer-dns: "{{ item['use-peer-dns'] | default(omit) }}"
+#     use-peer-ntp: "{{ item['use-peer-ntp'] | default(omit) }}"
+    dhcp_client_list: >
+      {{
+        dhcp_client_list | default([]) +
+        [ {
+            'interface': item.1.name
+          } | combine( item.1.ip_settings.dhcp_client )
+        ]
+      }}
+  when: item.1.ip_settings is defined and item.1.ip_settings.dhcp_client is defined
+  with_subelements:
+    - "{{ bridge }}"
+    - interface_vlans
+    - skip_missing: True
+
+- name: Add Bridge IP settings to dhcp_client_list
+  ansible.builtin.set_fact:
+    dhcp_client_list: >
+      {{
+        dhcp_client_list | default([]) +
+        [ {
+            'interface': item.name
+          } | combine( item.ip_settings.dhcp_client )
+        ]
+      }}
+  when: item.ip_settings is defined and item.ip_settings.dhcp_client is defined
+  loop: "{{ bridge }}"
+
+- name: Add ethernet IP settings to dhcp_client_list
+  ansible.builtin.set_fact:
+    dhcp_client_list: >
+      {{
+        dhcp_client_list | default([]) +
+        [ {
+            'interface': item.name
+          } | combine( item.ip_settings.dhcp_client )
+        ]
+      }}
+  when: item.ip_settings is defined and item.ip_settings.dhcp_client is defined
+  loop: "{{ ethernet_interfaces }}"
+
 #/ip dhcp-client
-#add interface=vlan10
 - name: DHCP Client Config
   community.routeros.api_modify:
     path: "ip dhcp-client"
-    data:
-      - interface: "{{ item.interface }}"
-        add-default-route: "{{ item.add_default_route | default(omit) }}"
-        comment: "{{ item.comment | default(omit) }}"
-        default-route-distance: "{{ item.default_route_distance | default(omit) }}"
-        dhcp-options: "{{ item.dhcp_options | default(omit) }}"
-        disabled: "{{ item.disabled | default(omit) }}"
-        script: "{{ item.script | default(omit) }}"
-        use-peer-dns: "{{ item.use_peer_dns | default(omit) }}"
-        use-peer-ntp: "{{ item.use_peer_ntp | default(omit) }}"
-  loop:
-    - { interface: "vlan10" }
+    data: "{{ dhcp_client_list }}"
+
+#      - interface: "{{ item.interface }}"
+#        add-default-route: "{{ item['add-default-route'] | default(omit) }}"
+#        comment: "{{ item.comment | default(omit) }}"
+#        default-route-distance: "{{ item['default-route-distance'] | default(omit) }}"
+#        dhcp-options: "{{ item['dhcp-options'] | default(omit) }}"
+#        disabled: "{{ item.disabled | default(omit) }}"
+#        script: "{{ item.script | default(omit) }}"
+#        use-peer-dns: "{{ item['use-peer-dns'] | default(omit) }}"
+#        use-peer-ntp: "{{ item['use-peer-ntp'] | default(omit) }}"
+#  loop: "{{ dhcp_client_list }}"

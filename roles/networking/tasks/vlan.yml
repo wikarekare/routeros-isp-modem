@@ -1,26 +1,41 @@
 ---
 #/interface vlan
-# add interface=bridge1 name=vlan10 vlan-id=10
-# add interface=bridge1 name=vlan1 vlan-id=1
-# Still need to do the reverse, with /interface bridge vlan add ... ?
 
-- name: Add VLAN 1 and 10 to bridge
+- name: build vlan list
+  #     - name: "{{ item.name }}"
+  #       interface: "{{ item.interface }}"
+  #       arp: "{{ item.arp | default(omit) }}"
+  #       arp-timeout: "{{ item['arp-timeout'] | default(omit) }}"
+  #       comment: "{{ item.comment | default(omit) }}"
+  #       disabled: "{{ item.disabled | default(omit) }}"
+  #       loop-protect: "{{ item['loop-protect'] | default(omit) }}"
+  #       loop-protect-disable-time: "{{ item['loop-protect-disable-time'] | default(omit) }}"
+  #       loop-protect-send-interval: "{{ item['loop-protect-send-interval'] | default(omit) }}"
+  #       mtu: "{{ item.mtu | default(omit) }}"
+  #       use-service-tag: "{{ item['use-service-tag'] | default(omit) }}"
+  #       vlan-id: "{{ item['vlan-id'] | default(omit) }}"
+  ansible.builtin.set_fact:
+    vlan_list: >
+      {{
+        vlan_list | default([])
+        + [
+            item.1
+            | ansible.utils.remove_keys(['vlan-ids','ip_settings','dhcp_server','untagged','tagged'])
+            | combine( { 'interface': item.0.name, 'vlan-id': item.1['vlan-ids'] } )
+          ]
+      }}
+  with_subelements:
+    - "{{ bridge }}"
+    - interface_vlans
+    - skip_missing: True
+
+- name: Debug bridge list
+  ansible.builtin.debug:
+    var: vlan_list
+
+- name: Add VLans to bridge
   community.routeros.api_modify:
+    handle_absent_entries: remove
+    handle_entries_content: remove_as_much_as_possible
     path: "interface vlan"
-    data:
-      - name: "{{ item.name }}"
-        interface: "{{ item.interface }}"
-        arp: "{{ item.arp | default(omit) }}"
-        arp-timeout: "{{ item.arp_timeout | default(omit) }}"
-        comment: "{{ item.comment | default(omit) }}"
-        disabled: "{{ item.disabled | default(omit) }}"
-        loop-protect: "{{ item.loop_protect | default(omit) }}"
-        loop-protect-disable-time: "{{ item.loop_protect_disable_time | default(omit) }}"
-        loop-protect-send-interval: "{{ item.loop_protect_send_interval | default(omit) }}"
-        mtu: "{{ item.mtu | default(omit) }}"
-        use-service-tag: "{{ item.use_service_tag | default(omit) }}"
-        vlan-id: "{{ item.vlan_id | default(omit) }}"
-  loop:
-    - { name: "vlan1", interface: "{{ bridge.name }}", vlan_id: "1" }
-    - { name: "vlan10", interface: "{{ bridge.name }}", vlan_id: "10" }
-    - { name: "vlan88", interface: "{{ bridge.name }}", vlan_id: "88" }
+    data: "{{ vlan_list }}"

@@ -2,20 +2,10 @@
 - name: Enable SNMP
   community.routeros.api_modify:
     path: "snmp"
-    data:
-      - enabled: "yes"
-        contact: "Rob Burrowes, rob@wikarekare.org"
-        location: "OceanView Cabinet"
+    data: "{{ snmp.config }}"
 
 - name: Set SNMP Parameters
   community.routeros.api_modify:
     path: "snmp community"
     handle_absent_entries: remove
-    data:
-      - name: "public"
-        read-access: "no"
-        write-access: "no"
-      - name: "wikk_ovc_ro"
-        read-access: "yes"
-        write-access: "no"
-        addresses: "{{ vlan1.network }}/{{ vlan1.mask_bits }}"
+    data: "{{ snmp.community }}"

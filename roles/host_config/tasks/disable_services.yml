@@ -2,10 +2,4 @@
 - name: Disable unneeded services
   community.routeros.api_modify:
     path: "ip service"
-    data:
-      - name: "{{ item }}"
-        disabled: yes
-  loop:
-    - telnet
-    - ftp
-    - winbox
+    data: "{{ services }}"

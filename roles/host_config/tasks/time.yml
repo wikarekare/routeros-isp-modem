@@ -17,4 +17,4 @@
   community.routeros.api_modify:
     path: "system clock"
     data:
-      - time-zone-name: "Pacific/Auckland"
+      - time-zone-name: "{{ timezone }}"

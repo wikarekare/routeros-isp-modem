@@ -1,6 +1,6 @@
 ---
 - name: Configure Mikrotik as Fibre Modem
-  hosts: mikrotik
+  hosts: fibre01
   gather_facts: false
   module_defaults:
     group/community.routeros.api:
@@ -22,6 +22,321 @@
     - vars/combined.yml
 
   tasks:
-  - name: debug variables
+  #- name: debug variables
+  #  ansible.builtin.debug:
+  #    var: mikrotik
+
+
+  - name: build bridge vlans list
+    ansible.builtin.set_fact:
+      #      bridge: "{{ item.bridge }}"
+      #      vlan-ids: "{{ item.vlan_id }}"
+      #      tagged: "{{ item.tagged | default(omit) }}" # Use omit if tagged is not always present
+      #      untagged: "{{ item.untagged | default(omit) }}" # Use omit if untagged is not always present
+      #      comment: "{{ item.comment | default(omit) }}"
+      bridge_interface_vlans: >
+        {{
+          bridge_interface_vlans | default([]) +
+          [
+            item.1 | dict2items
+            | selectattr('key', 'in', ['vlan-ids','tagged','untagged','comment'])
+            | items2dict
+            | combine( { 'bridge': item.0.name } )
+          ]
+        }}
+    with_subelements:
+      - "{{ bridge }}"
+      - interface_vlans
+      - skip_missing: True
+
+
+  - name: Debug bridge Interface vlans
     ansible.builtin.debug:
-      var: mikrotik
+      var: bridge_interface_vlans
+
+  - name: build interface list
+    ansible.builtin.set_fact:
+      interface_list_t: >
+        {{
+          interface_list_t | default([])
+          + [ item | ansible.utils.remove_keys(['interfaces']) ]
+        }}
+    loop: "{{ interface_list }}"
+
+  - name: Debug interface list
+    ansible.builtin.debug:
+      var: interface_list_t
+
+  - name: build interface list members
+    ansible.builtin.set_fact:
+      interface_list_members: >
+        {{
+          interface_list_members | default([])
+          + [ item.1 | combine( { 'list': item.0.name } ) ]
+        }}
+    with_subelements:
+      - "{{ interface_list }}"
+      - interfaces
+      - skip_missing: True
+
+  - name: Debug interface list members
+    ansible.builtin.debug:
+      var: interface_list_members
+
+  - name: build vlan list
+    #     - name: "{{ item.name }}"
+    #       interface: "{{ item.interface }}"
+    #       arp: "{{ item.arp | default(omit) }}"
+    #       arp-timeout: "{{ item.arp_timeout | default(omit) }}"
+    #       comment: "{{ item.comment | default(omit) }}"
+    #       disabled: "{{ item.disabled | default(omit) }}"
+    #       loop-protect: "{{ item.loop_protect | default(omit) }}"
+    #       loop-protect-disable-time: "{{ item.loop_protect_disable_time | default(omit) }}"
+    #       loop-protect-send-interval: "{{ item.loop_protect_send_interval | default(omit) }}"
+    #       mtu: "{{ item.mtu | default(omit) }}"
+    #       use-service-tag: "{{ item.use_service_tag | default(omit) }}"
+    #       vlan-id: "{{ item.vlan_id | default(omit) }}"
+    ansible.builtin.set_fact:
+      vlan_list: >
+        {{
+          vlan_list | default([])
+          + [
+              item.1
+              | ansible.utils.remove_keys(['vlan-ids','ip_settings','dhcp_server','untagged','tagged'])
+              | combine( { 'interface': item.0.name, 'vlan-id': item.1['vlan-ids'] } )
+            ]
+        }}
+    with_subelements:
+      - "{{ bridge }}"
+      - interface_vlans
+      - skip_missing: True
+
+  - name: Debug bridge list
+    ansible.builtin.debug:
+      var: vlan_list
+
+  # This is our internal LAN vlan
+  # Need to loop over ethernet, bridge and vlan interfaces, looking for static IP settings.
+  - name: build VLAN IP settings ip_list
+    ansible.builtin.set_fact:
+      ip_list: >
+        {{
+          ip_list | default([]) +
+          [{
+            'interface': item.1.name,
+            'address': item.1.ip_settings.static.ip + '/' + item.1.ip_settings.static.mask_bits,
+            'network': item.1.ip_settings.static.network,
+            'comment': item.1.comment | default(omit),
+            'disabled': item.1.disabled | default(omit)
+         }]
+        }}
+    # loop: ethernet_interfaces
+    # when ethernet_interfaces.ip_settings.static is defined
+    # loop: bridge.interfaces
+    # when bridge.interfaces.ip_settings.static is defined
+    when: item.1.ip_settings is defined and item.1.ip_settings.static is defined
+    with_subelements:
+      - "{{ bridge }}"
+      - interface_vlans
+      - skip_missing: True
+
+  # This is our internal LAN vlan
+  # Need to loop over ethernet, bridge and vlan interfaces, looking for static IP settings.
+  - name: Add Bridge IP settings to ip_list
+    ansible.builtin.set_fact:
+      ip_list: >
+        {{
+          ip_list | default([]) +
+          [{
+            'interface': item.name,
+            'address': item.ip_settings.static.ip + '/' + item.ip_settings.static.mask_bits,
+            'network': item.ip_settings.static.network,
+            'comment': item.comment | default(omit),
+            'disabled': item.disabled | default(omit)
+          }]
+        }}
+    # loop: ethernet_interfaces
+    when: item.ip_settings is defined and item.ip_settings.static is defined
+    loop: "{{ bridge }}"
+
+  - name: Add ethernet IP settings to ip_list
+    ansible.builtin.set_fact:
+      ip_list: >
+        {{
+          ip_list | default([]) +
+          [{
+            'interface': item.name,
+            'address': item.ip_settings.static.ip + '/' + item.ip_settings.static.mask_bits,
+            'network': item.ip_settings.static.network,
+            'comment': item.comment | default(omit),
+            'disabled': item.disabled | default(omit)
+         }]
+        }}
+    when: item.ip_settings is defined and item.ip_settings.static is defined
+    loop: "{{ ethernet_interfaces }}"
+
+  #  loop:
+  #    - { address: "{{ vlan88.ip }}/{{ vlan88.mask_bits }}", network: "{{ vlan88.network }}", interface: "{{ vlan88.name }}"}
+  #    - { address: "{{ vlan1.ip }}/{{ vlan1.mask_bits }}", network: "{{ vlan1.network }}", interface: "{{ vlan1.name }}"}
+
+  - name: Debug ip_list
+    ansible.builtin.debug:
+      var: ip_list
+    when: ip_list is defined
+
+
+  # also need to loop over bridge and ethernet interfaces, looking for static IP settings.
+  - name: build VLAN IP settings dhcp_client_list
+    ansible.builtin.set_fact:
+#     interface: "{{ item.interface }}"
+#     add-default-route: "{{ item['add-default-route'] | default(omit) }}"
+#     comment: "{{ item.comment | default(omit) }}"
+#     default-route-distance: "{{ item['default-route-distance'] | default(omit) }}"
+#     dhcp-options: "{{ item['dhcp-options'] | default(omit) }}"
+#     disabled: "{{ item.disabled | default(omit) }}"
+#     script: "{{ item.script | default(omit) }}"
+#     use-peer-dns: "{{ item['use-peer-dns'] | default(omit) }}"
+#     use-peer-ntp: "{{ item['use-peer-ntp'] | default(omit) }}"
+      dhcp_client_list: >
+        {{
+          dhcp_client_list | default([]) +
+          [ {
+              'interface': item.1.name
+            } | combine( item.1.ip_settings.dhcp_client )
+          ]
+        }}
+    when: item.1.dchp_server is defined
+    with_subelements:
+      - "{{ bridge }}"
+      - interface_vlans
+      - skip_missing: True
+
+  - name: Add Bridge IP settings to dhcp_client_list
+    ansible.builtin.set_fact:
+      dhcp_client_list: >
+        {{
+          dhcp_client_list | default([]) +
+          [ {
+              'interface': item.name
+            } | combine( item.ip_settings.dhcp_client )
+          ]
+        }}
+    when: item.ip_settings is defined and item.ip_settings.dhcp_client is defined
+    loop: "{{ bridge }}"
+
+  - name: Add ethernet IP settings to dhcp_client_list
+    ansible.builtin.set_fact:
+      dhcp_client_list: >
+        {{
+          dhcp_client_list | default([]) +
+          [ {
+              'interface': item.name
+            } | combine( item.ip_settings.dhcp_client )
+          ]
+        }}
+    when: item.ip_settings is defined and item.ip_settings.dhcp_client is defined
+    loop: "{{ ethernet_interfaces }}"
+
+  - name: Debug dhcp_client_list
+    ansible.builtin.debug:
+      var: dhcp_client_list
+    when: dhcp_client_list is defined
+
+
+# DHCP Server
+#     - { name: "{{ dhcp_server.pool_name }}", ranges: "{{ dhcp_server.pool_range }}" }
+#     - { name: dhcp1, interface: "{{ vlan1.name }}", address_pool: "{{ dhcp_server.pool_name }}", lease_time: "1h"}
+#     - { address: "{{ dhcp_server.network }}",  dns_server: "{{ dhcp_server.dns_server }}", gateway: "{{ dhcp_server.gateway }}" }
+# 
+# Old layout
+# dhcp_server:
+#   pool_name: "dhcp_pool_vlan1"                          
+#   pool_range: "{{ dhcp_range }}"
+#   network: "{{ vlan1.network }}/{{ vlan1.mask_bits }}"
+#   netmask: "{{ vlan1.mask_bits  }}"
+#   gateway: "{{ vlan1.ip }}"
+#   dns_server: "{{ dns1 }},{{ dns2 }}"
+#   ntp_server: "{{ ntp1 }},{{ ntp2 }}"
+# 
+# New layout
+#         ip_settings:
+#           static:
+#             ip: &lan_ip "{{ lan_ip }}"
+#             network: "{{ lan_network }}"
+#             mask_bits: "{{ lan_mask_bits }}"
+#             gateway: &lan_gw "{{ lan_gw }}"
+#        dhcp_server:
+#          comment: "LAN"
+#          range: "{{ dhcp_range }}"
+#          dns_server: *lan_ip
+#          gateway: *lan_ip
+# 
+#/ip pool
+# add name= ranges=xx.xx.xx.xx-xx.xx.xx.xx
+- name: DHCP Server IP Pool
+  community.routeros.api_modify:
+    path: "ip pool"
+    data:
+      - name: "{{ item.name }}"
+        ranges: "{{ item.ranges }}"
+        next-pool: "{{ item['next-pool'] | default(omit) }}"
+        comment: "{{ item['next-pool'] | default(omit) }}"
+  when: item.ip_settings is defined and item.ip_settings.dhcp_client is defined
+  with_subelements:
+    - "{{ bridge }}"
+    - interface_vlans
+    - skip_missing: True
+
+#/ip dhcp-server
+# add address-pool=dhcp_pool_vlan1 interface=vlan1 lease-time=1h name=dhcp1
+- name: DHCP Server Config
+  community.routeros.api_modify:
+    path: "ip dhcp-server"
+    data:
+      - name: "{{ item.name }}"
+        interface: "{{ item.interface }}"
+        address-pool: "{{ item['address-pool'] | default(omit) }}"
+        allow-dual-stack-queue: "{{ item['allow-dual-stack-queue'] | default(omit) }}"
+        always-broadcast: "{{ item['always-broadcast'] | default(omit) }}"
+        authoritative: "{{ item.authoritative | default(omit) }}"
+        bootp-lease-time: "{{ item['bootp-lease-time'] | default(omit) }}"
+        bootp-support: "{{ item['bootp-support'] | default(omit) }}"
+        client-mac-limit: "{{ item['client-mac-limit'] | default(omit) }}"
+        comment: "{{ item.comment | default(omit) }}"
+        conflict-detection: "{{ item['conflict-detection'] | default(omit) }}"
+        delay-threshold: "{{ item['delay-threshold'] | default(omit) }}"
+        dhcp-option-set: "{{ item['dhcp-option-set'] | default(omit) }}"
+        disabled: "{{ item.disabled | default(omit) }}"
+        insert-queue-before: "{{ item['insert-queue-before'] | default(omit) }}"
+        lease-script: "{{ item['lease-script'] | default(omit) }}"
+        lease-time: "{{ item['lease-time'] | default(omit) }}"
+        parent-queue: "{{ item['parent-queue'] | default(omit) }}"
+        relay: "{{ item.relay | default(omit) }}"
+        server-address: "{{ item['server-address'] | default(omit) }}"
+        use-framed-as-classless: "{{ item['use-framed-as-classless'] | default(omit) }}"
+        use-radius: "{{ item['use-radius'] | default(omit) }}"
+  loop:
+    - { name: dhcp1, interface: "{{ vlan1.name }}", address_pool: "{{ dhcp_server.pool_name }}", lease_time: "1h"}
+#
+#/ip dhcp-server network
+# add address=xx.xx.xx.xx/24 dns-server=xx.xx.xx.xx gateway=xx.xx.xx.xx
+- name: DHCP Server Network Config
+  community.routeros.api_modify:
+    path: "ip dhcp-server network"
+    data:
+      - address: "{{ item.address }}"
+        dns-server: "{{ item['dns-server'] }}"
+        boot-file-name: "{{ item['boot-file-name'] | default(omit) }}"
+        caps-manager: "{{ item['caps-manager'] | default(omit) }}"
+        comment: "{{ item.comment | default(omit) }}"
+        dhcp-option: "{{ item['dhcp-option'] | default(omit) }}"
+        dhcp-option-set: "{{ item['dhcp-option-set'] | default(omit) }}"
+        dns-none: "{{ item['dns-none'] | default(omit) }}"
+        domain: "{{ item.domain | default(omit) }}"
+        gateway: "{{ item.gateway | default(omit) }}"
+        netmask: "{{ item.netmask | default(omit) }}"
+        next-server: "{{ item['next-server'] | default(omit) }}"
+        ntp-server: "{{ item['ntp-server'] | default(omit) }}"
+        wins-server: "{{ item['wins-server'] | default(omit) }}"
+  loop:
+    - {  address: "{{ dhcp_server.network }}",  dns_server: "{{ dhcp_server.dns_server }}", gateway: "{{ dhcp_server.gateway }}" }
