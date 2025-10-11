@@ -205,13 +205,13 @@
             } | combine( item.1.ip_settings.dhcp_client )
           ]
         }}
-    when: item.1.dchp_server is defined
+    when: item.1.ip_settings is defined and item.1.ip_settings.dhcp_client is defined
     with_subelements:
       - "{{ bridge }}"
       - interface_vlans
       - skip_missing: True
 
-  - name: Add Bridge IP settings to dhcp_client_list
+  - name: Add Bridge and Ethernet IP settings to dhcp_client_list
     ansible.builtin.set_fact:
       dhcp_client_list: >
         {{
@@ -222,20 +222,7 @@
           ]
         }}
     when: item.ip_settings is defined and item.ip_settings.dhcp_client is defined
-    loop: "{{ bridge }}"
-
-  - name: Add ethernet IP settings to dhcp_client_list
-    ansible.builtin.set_fact:
-      dhcp_client_list: >
-        {{
-          dhcp_client_list | default([]) +
-          [ {
-              'interface': item.name
-            } | combine( item.ip_settings.dhcp_client )
-          ]
-        }}
-    when: item.ip_settings is defined and item.ip_settings.dhcp_client is defined
-    loop: "{{ ethernet_interfaces }}"
+    loop: "{{ bridge + ethernet_interfaces }}"
 
   - name: Debug dhcp_client_list
     ansible.builtin.debug:
@@ -247,17 +234,17 @@
 #     - { name: "{{ dhcp_server.pool_name }}", ranges: "{{ dhcp_server.pool_range }}" }
 #     - { name: dhcp1, interface: "{{ vlan1.name }}", address_pool: "{{ dhcp_server.pool_name }}", lease_time: "1h"}
 #     - { address: "{{ dhcp_server.network }}",  dns_server: "{{ dhcp_server.dns_server }}", gateway: "{{ dhcp_server.gateway }}" }
-# 
+#
 # Old layout
 # dhcp_server:
-#   pool_name: "dhcp_pool_vlan1"                          
+#   pool_name: "dhcp_pool_vlan1"
 #   pool_range: "{{ dhcp_range }}"
 #   network: "{{ vlan1.network }}/{{ vlan1.mask_bits }}"
 #   netmask: "{{ vlan1.mask_bits  }}"
 #   gateway: "{{ vlan1.ip }}"
 #   dns_server: "{{ dns1 }},{{ dns2 }}"
 #   ntp_server: "{{ ntp1 }},{{ ntp2 }}"
-# 
+#
 # New layout
 #         ip_settings:
 #           static:
@@ -270,73 +257,192 @@
 #          range: "{{ dhcp_range }}"
 #          dns_server: *lan_ip
 #          gateway: *lan_ip
-# 
-#/ip pool
-# add name= ranges=xx.xx.xx.xx-xx.xx.xx.xx
-- name: DHCP Server IP Pool
-  community.routeros.api_modify:
-    path: "ip pool"
-    data:
-      - name: "{{ item.name }}"
-        ranges: "{{ item.ranges }}"
-        next-pool: "{{ item['next-pool'] | default(omit) }}"
-        comment: "{{ item['next-pool'] | default(omit) }}"
-  when: item.ip_settings is defined and item.ip_settings.dhcp_client is defined
-  with_subelements:
-    - "{{ bridge }}"
-    - interface_vlans
-    - skip_missing: True
-
-#/ip dhcp-server
-# add address-pool=dhcp_pool_vlan1 interface=vlan1 lease-time=1h name=dhcp1
-- name: DHCP Server Config
-  community.routeros.api_modify:
-    path: "ip dhcp-server"
-    data:
-      - name: "{{ item.name }}"
-        interface: "{{ item.interface }}"
-        address-pool: "{{ item['address-pool'] | default(omit) }}"
-        allow-dual-stack-queue: "{{ item['allow-dual-stack-queue'] | default(omit) }}"
-        always-broadcast: "{{ item['always-broadcast'] | default(omit) }}"
-        authoritative: "{{ item.authoritative | default(omit) }}"
-        bootp-lease-time: "{{ item['bootp-lease-time'] | default(omit) }}"
-        bootp-support: "{{ item['bootp-support'] | default(omit) }}"
-        client-mac-limit: "{{ item['client-mac-limit'] | default(omit) }}"
-        comment: "{{ item.comment | default(omit) }}"
-        conflict-detection: "{{ item['conflict-detection'] | default(omit) }}"
-        delay-threshold: "{{ item['delay-threshold'] | default(omit) }}"
-        dhcp-option-set: "{{ item['dhcp-option-set'] | default(omit) }}"
-        disabled: "{{ item.disabled | default(omit) }}"
-        insert-queue-before: "{{ item['insert-queue-before'] | default(omit) }}"
-        lease-script: "{{ item['lease-script'] | default(omit) }}"
-        lease-time: "{{ item['lease-time'] | default(omit) }}"
-        parent-queue: "{{ item['parent-queue'] | default(omit) }}"
-        relay: "{{ item.relay | default(omit) }}"
-        server-address: "{{ item['server-address'] | default(omit) }}"
-        use-framed-as-classless: "{{ item['use-framed-as-classless'] | default(omit) }}"
-        use-radius: "{{ item['use-radius'] | default(omit) }}"
-  loop:
-    - { name: dhcp1, interface: "{{ vlan1.name }}", address_pool: "{{ dhcp_server.pool_name }}", lease_time: "1h"}
 #
-#/ip dhcp-server network
-# add address=xx.xx.xx.xx/24 dns-server=xx.xx.xx.xx gateway=xx.xx.xx.xx
-- name: DHCP Server Network Config
-  community.routeros.api_modify:
-    path: "ip dhcp-server network"
-    data:
-      - address: "{{ item.address }}"
-        dns-server: "{{ item['dns-server'] }}"
-        boot-file-name: "{{ item['boot-file-name'] | default(omit) }}"
-        caps-manager: "{{ item['caps-manager'] | default(omit) }}"
-        comment: "{{ item.comment | default(omit) }}"
-        dhcp-option: "{{ item['dhcp-option'] | default(omit) }}"
-        dhcp-option-set: "{{ item['dhcp-option-set'] | default(omit) }}"
-        dns-none: "{{ item['dns-none'] | default(omit) }}"
-        domain: "{{ item.domain | default(omit) }}"
-        gateway: "{{ item.gateway | default(omit) }}"
-        netmask: "{{ item.netmask | default(omit) }}"
-        next-server: "{{ item['next-server'] | default(omit) }}"
-        ntp-server: "{{ item['ntp-server'] | default(omit) }}"
-        wins-server: "{{ item['wins-server'] | default(omit) }}"
-  loop:
-    - {  address: "{{ dhcp_server.network }}",  dns_server: "{{ dhcp_server.dns_server }}", gateway: "{{ dhcp_server.gateway }}" }
+  - name: build dhcp_server_pool_list from bridge.interface_vlans
+    ansible.builtin.set_fact:
+     # Could iterate over ranges, so we could have multiple pools.
+     # Not really a usecase for us though
+     dhcp_server_pool_list: >
+        {{
+          dhcp_server_pool_list | default([]) +
+          [ {
+              'name': "dhcp_pool_" + item.1.name,
+              'ranges': item.1.dhcp_server.ranges | default(omit),
+              'next-pool': item.1.dhcp_server['next-pool'] | default(omit),
+              'comment': item.1.dhcp_server.comment | default(omit)
+            }
+          ]
+        }}
+    when: item.1.dhcp_server is defined
+    with_subelements:
+      - "{{ bridge }}"
+      - interface_vlans
+      - skip_missing: True
+
+  # also need to loop over bridge and ethernet interfaces, looking for dhcp pool settings.
+  - name: Add bridge and ethernet dhcp_server settings to dhcp_server_pool_list
+    ansible.builtin.set_fact:
+      dhcp_server_pool_list: >
+        {{
+          dhcp_server_pool_list | default([]) +
+          [
+            {
+              'name': "dhcp_pool_" + item.name,
+              'ranges': item.dhcp_server.ranges | default(omit),
+              'next-pool': item.dhcp_server['next-pool'] | default(omit),
+              'comment': item.dhcp_server.comment | default(omit)
+            }
+          ]
+        }}
+    when: item.dhcp_server is defined
+    loop: "{{ bridge + ethernet_interfaces }}"
+
+  - name: Debug dhcp_client_list with Bridge and Ethernet interfaces
+    ansible.builtin.debug:
+      var: dhcp_server_pool_list
+    when: dhcp_server_pool_list is defined
+
+  # Making wild assumption that a dhcp server has a static IP.
+  - name: build dhcp_server_network from bridge.interface_vlans
+    ansible.builtin.set_fact:
+      dhcp_server_network: >
+        {{
+          dhcp_server_network | default([]) +
+          [
+            {
+              'address': item.1.ip_settings.static.ip + '/' + item.1.ip_settings.static.mask_bits,
+              'netmask': item.1.ip_settings.static.mask_bits,
+              'gateway': item.1.dhcp_server.gateway | default(omit),
+              'ntp-server': item.1.dhcp_server['ntp-server'] | default(omit),
+              'dns-server': item.1.dhcp_server['dns-server'] | default(omit),
+              'domain': item.1.dhcp_server.domain | default(omit),
+              'dns-none': item.1.dhcp_server['dns-none'] | default(omit),
+              'boot-file-name': item.1.dhcp_server['boot-file-name'] | default(omit),
+              'caps-manager': item.1.dhcp_server['caps-manager'] | default(omit),
+              'comment': item.1.dhcp_server.comment | default(omit),
+              'dhcp-option': item.1.dhcp_server['dhcp-option'] | default(omit),
+              'dhcp-option-set': item.1.dhcp_server['dhcp-option-set'] | default(omit),
+              'next-server': item.1.dhcp_server['next-server'] | default(omit),
+              'wins-server': item.1.dhcp_server['wins-server'] | default(omit)
+            }
+          ]
+        }}
+    when: item.1.dhcp_server is defined and item.1.ip_settings is defined and item.1.ip_settings.static is defined
+    with_subelements:
+      - "{{ bridge }}"
+      - interface_vlans
+      - skip_missing: True
+
+  # also need to loop over bridge and ethernet interfaces, looking for dhcp server network settings.
+  - name: Add bridge and ethernet dhcp_server settings to dhcp_server_pool_list
+    ansible.builtin.set_fact:
+      dhcp_server_network: >
+        {{
+          dhcp_server_network | default([]) +
+          [
+            {
+              'address': item.ip_settings.static.ip + '/' + item.ip_settings.static.mask_bits,
+              'netmask': item.ip_settings.static.mask_bits,
+              'gateway': item.dhcp_server.gateway | default(omit),
+              'ntp-server': item.dhcp_server['ntp-server'] | default(omit),
+              'dns-server': item.dhcp_server['dns-server'] | default(omit),
+              'domain': item.dhcp_server.domain | default(omit),
+              'dns-none': item.dhcp_server['dns-none'] | default(omit),
+              'boot-file-name': item.dhcp_server['boot-file-name'] | default(omit),
+              'caps-manager': item.dhcp_server['caps-manager'] | default(omit),
+              'comment': item.dhcp_server.comment | default(omit),
+              'dhcp-option': item.dhcp_server['dhcp-option'] | default(omit),
+              'dhcp-option-set': item.dhcp_server['dhcp-option-set'] | default(omit),
+              'next-server': item.dhcp_server['next-server'] | default(omit),
+              'wins-server': item.dhcp_server['wins-server'] | default(omit)
+            }
+          ]
+        }}
+    when: item.dhcp_server is defined and item.ip_settings is defined and item.ip_settings.static is defined
+    loop: "{{ bridge + ethernet_interfaces }}"
+
+  - name: Debug dhcp_server_network with Bridge and Ethernet interfaces
+    ansible.builtin.debug:
+      var: dhcp_server_network
+    when: dhcp_server_network is defined
+
+
+  # Making wild assumption that a dhcp server has a static IP.
+  - name: build dhcp_server_network from bridge.interface_vlans
+    ansible.builtin.set_fact:
+      dhcp_server: >
+        {{
+          dhcp_server | default([]) +
+          [
+            {
+              'name': 'dhcp_' + item.1.name,
+              'interface': item.1.name,
+              'address-pool': "dhcp_pool_" + item.1.name,
+              'allow-dual-stack-queue': item.1['allow-dual-stack-queue'] | default(omit),
+              'always-broadcast': item.1['always-broadcast'] | default(omit),
+              'authoritative': item.1.authoritative | default(omit),
+              'bootp-lease-time': item.1['bootp-lease-time'] | default(omit),
+              'bootp-support': item.1['bootp-support'] | default(omit),
+              'client-mac-limit': item.1['client-mac-limit'] | default(omit),
+              'comment': item.1.comment | default(omit),
+              'conflict-detection': item.1['conflict-detection'] | default(omit),
+              'delay-threshold': item.1['delay-threshold'] | default(omit),
+              'dhcp-option-set': item.1['dhcp-option-set'] | default(omit),
+              'disabled': item.1.disabled | default(omit),
+              'insert-queue-before': item.1['insert-queue-before'] | default(omit),
+              'lease-script': item.1['lease-script'] | default(omit),
+              'lease-time': item.1['lease-time'] | default(omit),
+              'parent-queue': item.1['parent-queue'] | default(omit),
+              'relay': item.1.relay | default(omit),
+              'server-address': item.1['server-address'] | default(omit),
+              'use-framed-as-classless': item.1['use-framed-as-classless'] | default(omit),
+              'use-radius': item.1['use-radius'] | default(omit)
+            }
+          ]
+        }}
+    when: item.1.dhcp_server is defined
+    with_subelements:
+      - "{{ bridge }}"
+      - interface_vlans
+      - skip_missing: True
+
+  # Making wild assumption that a dhcp server has a static IP.
+  - name: build dhcp_server_network from bridge.interface_vlans
+    ansible.builtin.set_fact:
+      dhcp_server: >
+        {{
+          dhcp_server | default([]) +
+          [
+            {
+              'name': 'dhcp_' + item.name,
+              'interface': item.name,
+              'address-pool': "dhcp_pool_" + item.name,
+              'allow-dual-stack-queue': item['allow-dual-stack-queue'] | default(omit),
+              'always-broadcast': item['always-broadcast'] | default(omit),
+              'authoritative': item.authoritative | default(omit),
+              'bootp-lease-time': item['bootp-lease-time'] | default(omit),
+              'bootp-support': item['bootp-support'] | default(omit),
+              'client-mac-limit': item['client-mac-limit'] | default(omit),
+              'comment': item.comment | default(omit),
+              'conflict-detection': item['conflict-detection'] | default(omit),
+              'delay-threshold': item['delay-threshold'] | default(omit),
+              'dhcp-option-set': item['dhcp-option-set'] | default(omit),
+              'disabled': item.disabled | default(omit),
+              'insert-queue-before': item['insert-queue-before'] | default(omit),
+              'lease-script': item['lease-script'] | default(omit),
+              'lease-time': item['lease-time'] | default(omit),
+              'parent-queue': item['parent-queue'] | default(omit),
+              'relay': item.relay | default(omit),
+              'server-address': item['server-address'] | default(omit),
+              'use-framed-as-classless': item['use-framed-as-classless'] | default(omit),
+              'use-radius': item['use-radius'] | default(omit)
+            }
+          ]
+        }}
+    when: item.dhcp_server is defined
+    loop: "{{ bridge + ethernet_interfaces }}"
+
+  - name: Debug dhcp_server with Bridge and Ethernet interfaces
+    ansible.builtin.debug:
+      var: dhcp_server
+    when: dhcp_server is defined

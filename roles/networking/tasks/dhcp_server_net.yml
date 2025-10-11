@@ -1,0 +1,72 @@
+---
+# Making wild assumption that a dhcp server has a static IP.
+- name: build dhcp_server_network from bridge.interface_vlans
+  ansible.builtin.set_fact:
+    dhcp_server_network: >
+      {{
+        dhcp_server_network | default([]) +
+        [
+          {
+            'address': item.1.ip_settings.static.ip + '/' + item.1.ip_settings.static.mask_bits,
+            'netmask': item.1.ip_settings.static.mask_bits,
+            'gateway': item.1.dhcp_server.gateway | default(omit),
+            'ntp-server': item.1.dhcp_server['ntp-server'] | default(omit),
+            'dns-server': item.1.dhcp_server['dns-server'] | default(omit),
+            'domain': item.1.dhcp_server.domain | default(omit),
+            'dns-none': item.1.dhcp_server['dns-none'] | default(omit),
+            'boot-file-name': item.1.dhcp_server['boot-file-name'] | default(omit),
+            'caps-manager': item.1.dhcp_server['caps-manager'] | default(omit),
+            'comment': item.1.dhcp_server.comment | default(omit),
+            'dhcp-option': item.1.dhcp_server['dhcp-option'] | default(omit),
+            'dhcp-option-set': item.1.dhcp_server['dhcp-option-set'] | default(omit),
+            'next-server': item.1.dhcp_server['next-server'] | default(omit),
+            'wins-server': item.1.dhcp_server['wins-server'] | default(omit)
+          }
+        ]
+      }}
+  when: item.1.dhcp_server is defined and item.1.ip_settings is defined and item.1.ip_settings.static is defined
+  with_subelements:
+    - "{{ bridge }}"
+    - interface_vlans
+    - skip_missing: True
+
+# also need to loop over bridge and ethernet interfaces, looking for dhcp server network settings.
+- name: Add bridge and ethernet dhcp_server settings to dhcp_server_pool_list
+  ansible.builtin.set_fact:
+    dhcp_server_network: >
+      {{
+        dhcp_server_network | default([]) +
+        [
+          {
+            'address': item.ip_settings.static.ip + '/' + item.ip_settings.static.mask_bits,
+            'netmask': item.ip_settings.static.mask_bits,
+            'gateway': item.dhcp_server.gateway | default(omit),
+            'ntp-server': item.dhcp_server['ntp-server'] | default(omit),
+            'dns-server': item.dhcp_server['dns-server'] | default(omit),
+            'domain': item.dhcp_server.domain | default(omit),
+            'dns-none': item.dhcp_server['dns-none'] | default(omit),
+            'boot-file-name': item.dhcp_server['boot-file-name'] | default(omit),
+            'caps-manager': item.dhcp_server['caps-manager'] | default(omit),
+            'comment': item.dhcp_server.comment | default(omit),
+            'dhcp-option': item.dhcp_server['dhcp-option'] | default(omit),
+            'dhcp-option-set': item.dhcp_server['dhcp-option-set'] | default(omit),
+            'next-server': item.dhcp_server['next-server'] | default(omit),
+            'wins-server': item.dhcp_server['wins-server'] | default(omit)
+          }
+        ]
+      }}
+  when: item.dhcp_server is defined and item.ip_settings is defined and item.ip_settings.static is defined
+  loop: "{{ bridge + ethernet_interfaces }}"
+
+- name: Debug dhcp_server_network with Bridge and Ethernet interfaces
+  ansible.builtin.debug:
+    var: dhcp_server_network
+  when: dhcp_server_network is defined
+
+#
+#/ip dhcp-server network
+# add address=xx.xx.xx.xx/24 dns-server=xx.xx.xx.xx gateway=xx.xx.xx.xx
+- name: DHCP Server Network Config
+  community.routeros.api_modify:
+    path: "ip dhcp-server network"
+    data: "{{ dhcp_server_network }}" 

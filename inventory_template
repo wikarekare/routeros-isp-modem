@@ -3,8 +3,9 @@
 # Named group of hosts so you can run a playbook across multiple hosts using the group name
 [mikrotik]
 # host with inline variable following the host declaration
-myhostname1 ansible_host=xx.xx.xx.xx switch_mac=XX:XX:XX:XX:XX:XX lan_ip=xx.xx.xx.xx lan_gw=xx.xx.xx.xx
-myhostname2 ansible_host=xx.xx.xx.xx switch_mac=XX:XX:XX:XX:XX:XX lan_ip=xx.xx.xx.xx lan_gw=xx.xx.xx.xx
+myhostname1 ansible_host=xx.xx.xx.xx switch_mac=XX:XX:XX:XX:XX:XX lan_ip=xx.xx.xx.xx lan_gw=xx.xx.xx.xx lan_snmp_community=xxxxxxxx
+myhostname2 ansible_host=xx.xx.xx.xx switch_mac=XX:XX:XX:XX:XX:XX lan_ip=xx.xx.xx.xx lan_gw=xx.xx.xx.xx lan_snmp_community=xxxxxxxx
+
 # ...
 
 # Variables for every host in the mikrotik group
@@ -18,7 +19,7 @@ ntp1=xx.xx.xx.xx
 ntp2=xx.xx.xx.xx
 dns1=xx.xx.xx.xx
 dns2=xx.xx.xx.xx
-dhcp_range="xx.xx.xx.xx-xx.xx.xx.xx"
+lan_dhcp_range="xx.xx.xx.xx-xx.xx.xx.xx"
 lan_network=xx.xx.xx.xx
 lan_gw=xx.xx.xx.xx
 lan_mask_bits=xx

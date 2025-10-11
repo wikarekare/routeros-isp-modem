@@ -1,5 +1,4 @@
 ---
-# also need to loop over bridge and ethernet interfaces, looking for static IP settings.
 - name: build VLAN IP settings dhcp_client_list
   ansible.builtin.set_fact:
 #     interface: "{{ item.interface }}"
@@ -25,7 +24,8 @@
     - interface_vlans
     - skip_missing: True
 
-- name: Add Bridge IP settings to dhcp_client_list
+# also need to loop over bridge and ethernet interfaces, looking for static IP settings.
+- name: Add Bridge and Ethernet IP settings to dhcp_client_list
   ansible.builtin.set_fact:
     dhcp_client_list: >
       {{
@@ -36,20 +36,7 @@
         ]
       }}
   when: item.ip_settings is defined and item.ip_settings.dhcp_client is defined
-  loop: "{{ bridge }}"
-
-- name: Add ethernet IP settings to dhcp_client_list
-  ansible.builtin.set_fact:
-    dhcp_client_list: >
-      {{
-        dhcp_client_list | default([]) +
-        [ {
-            'interface': item.name
-          } | combine( item.ip_settings.dhcp_client )
-        ]
-      }}
-  when: item.ip_settings is defined and item.ip_settings.dhcp_client is defined
-  loop: "{{ ethernet_interfaces }}"
+  loop: "{{ bridge + ethernet_interfaces }}"
 
 #/ip dhcp-client
 - name: DHCP Client Config

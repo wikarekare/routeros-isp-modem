@@ -11,10 +11,17 @@ ethernet_interfaces:
     poe-out: "off"
   - name: ether5
     poe-out: "off"
-    ip_settings:
-    #  static: ...
+    #ip_settings:
+    #  static:
+    #    ip: "1.2.3.4"
+    #    network: "1.2.3.0"
+    #    mask_bits: "24"
+    #    gateway: "1.2.3.1"
     #   dhcp_client:
     #     comment: "Ether5 DHCP Client"
+    #dhcp_server:
+    #  comment: "Ether5"
+    #  ranges: "1.2.3.20-1.2.3.40"
   # - { name: sfp1, auto-negotiation: "no", speed: 1G-baseT-full  }
 
 # Mikrotik bridge is a vlan capable switch
@@ -25,9 +32,13 @@ bridge:
     comment: "defcon Physical Management interface"
     admin-mac: "{{ def_switch_mac }}"
     auto-mac: "no"
+    vlan-filtering: "no"
     ip_settings:
       dhcp_client:
         comment: "Defconf"
+    # dhcp_server:
+    #   comment: "BridgeLocal"
+    #   ranges: "{{ lan_dhcp_range }}"
     interfaces:
       # Left ether5 on the default bridge during configuration.
       - { interface: ether5 }
@@ -38,6 +49,7 @@ bridge:
     admin-mac: "{{ br1_switch_mac }}"
     auto-mac: "no"
     comment: "switch"
+    vlan-filtering: "yes"
     interfaces:
       - { interface: ether1, hw: "yes" }
       - { interface: ether2, hw: "yes" }
@@ -58,9 +70,11 @@ bridge:
             gateway: &lan_gw "{{ lan_gw }}"
         dhcp_server:
           comment: "LAN"
-          range: "{{ lan_dhcp_range }}"
-          dns_server: *lan_ip
+          ranges: "{{ lan_dhcp_range }}"
           gateway: *lan_ip
+          dns-server: "{{ dns1 }},{{ dns2 }}"
+          dns-domain: "{{ dns_domain }}"
+          ntp-server: "{{ ntp1 }},{{ ntp2 }}"
       - name: vlan10
         vlan-ids: "10"
         comment: "ISP WAN vlan"
@@ -78,7 +92,7 @@ bridge:
             network: "{{ mgmt_network }}"
             mask_bits: "{{ mgmt_mask_bits }}"
         # dhcp_server:
-        #   range: "{{ mgmt_dhcp_range }}"
+        #   ranges: "{{ mgmt_dhcp_range }}"
         #   dns_server: *mgmt_ip
 
 # Repeat bridge settings for switch (look at merging with brige.interface_vlans)
@@ -117,7 +131,7 @@ snmp:
       location: "OceanView Cabinet"
   community:
     - { name: "public", read-access: "no", write-access: "no" }
-    - { name: "wikk_ovc_ro", read-access: "yes", write-access: "no", addresses: "{{ lan_network }}/{{ lan_mask_bits }}" }
+    - { name: "{{ lan_snmp_community }}", read-access: "yes", write-access: "no", addresses: "{{ lan_network }}/{{ lan_mask_bits }}" }
 
 ssh:
   host_ca:

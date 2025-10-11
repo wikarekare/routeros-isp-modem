@@ -5,11 +5,11 @@
 
 - name: build bridge vlans list
   ansible.builtin.set_fact:
-    #      bridge: "{{ item.bridge }}"
-    #      vlan-ids: "{{ item['vlan-id'] }}"
-    #      tagged: "{{ item.tagged | default(omit) }}" # Use omit if tagged is not always present
-    #      untagged: "{{ item.untagged | default(omit) }}" # Use omit if untagged is not always present
-    #      comment: "{{ item.comment | default(omit) }}"
+    #      bridge:
+    #      vlan-ids:
+    #      tagged:
+    #      untagged:
+    #      comment:
     bridge_interface_vlans: >
       {{
         bridge_interface_vlans | default([]) +
@@ -31,8 +31,8 @@
 
 - name: Configure VLANs on the bridge
   community.routeros.api_modify:
-    handle_absent_entries: remove
-    handle_entries_content: remove_as_much_as_possible
+    # handle_absent_entries: remove
+    # handle_entries_content: remove_as_much_as_possible
     path: "interface bridge vlan"
     data: "{{ bridge_interface_vlans }}"
 

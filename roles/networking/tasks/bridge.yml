@@ -12,7 +12,7 @@
     bridge_list: >
       {{
         bridge_list | default([])
-        + [item  | ansible.utils.remove_keys(['interfaces', 'interface_vlans']) ]
+        + [item  | ansible.utils.remove_keys(['interfaces', 'interface_vlans','ip_settings']) ]
       }}
   loop: "{{ bridge }}"
 

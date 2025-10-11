@@ -1,0 +1,50 @@
+---
+#/ip pool
+# add name= ranges=xx.xx.xx.xx-xx.xx.xx.xx
+- name: build dhcp_server_pool_list from bridge.interface_vlans
+  ansible.builtin.set_fact:
+    # Could iterate over ranges, so we could have multiple pools.
+    # Not really a usecase for us though
+    dhcp_server_pool_list: >
+      {{
+        dhcp_server_pool_list | default([]) +
+        [ {
+            'name': "dhcp_pool_" + item.1.name,
+            'ranges': item.1.dhcp_server.ranges | default(omit),
+            'next-pool': item.1.dhcp_server['next-pool'] | default(omit),
+            'comment': item.1.dhcp_server.comment | default(omit)
+          }
+        ]
+      }}
+  when: item.1.dhcp_server is defined
+  with_subelements:
+    - "{{ bridge }}"
+    - interface_vlans
+    - skip_missing: True
+
+# also need to loop over bridge and ethernet interfaces, looking for dhcp pool settings.
+- name: Add bridge and ethernet dhcp_server settings to dhcp_server_pool_list
+  ansible.builtin.set_fact:
+    dhcp_server_pool_list: >
+      {{
+        dhcp_server_pool_list | default([]) +
+        [ {
+            'name': "dhcp_pool_" + item.name,
+            'ranges': item.dhcp_server.ranges | default(omit),
+            'next-pool': item.dhcp_server['next-pool'] | default(omit),
+            'comment': item.dhcp_server.comment | default(omit)
+          }
+        ]
+      }}
+  when: item.dhcp_server is defined
+  loop: "{{ bridge + ethernet_interfaces }}"
+
+- name: Debug dhcp_client_list with Bridge and Ethernet interfaces
+  ansible.builtin.debug:
+    var: dhcp_server_pool_list
+  when: dhcp_server_pool_list is defined
+
+- name: DHCP Server IP Pool
+  community.routeros.api_modify:
+    path: "ip pool"
+    data: "{{ dhcp_server_pool_list }}"
