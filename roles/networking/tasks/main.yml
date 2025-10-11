@@ -19,7 +19,7 @@
 - include_tasks: ip_address.yml
 - include_tasks: dhcp_server_pool.yml
 - include_tasks: dhcp_server.yml
-- include_tasks: dhcp_server_network.yml
+- include_tasks: dhcp_server_net.yml
 - include_tasks: dhcp_client.yml
 - include_tasks: switch_ports.yml
 # The following use interface List names

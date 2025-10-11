@@ -310,7 +310,7 @@
           dhcp_server_network | default([]) +
           [
             {
-              'address': item.1.ip_settings.static.ip + '/' + item.1.ip_settings.static.mask_bits,
+              'address': item.1.ip_settings.static.network + '/' + item.1.ip_settings.static.mask_bits,
               'netmask': item.1.ip_settings.static.mask_bits,
               'gateway': item.1.dhcp_server.gateway | default(omit),
               'ntp-server': item.1.dhcp_server['ntp-server'] | default(omit),
@@ -341,7 +341,7 @@
           dhcp_server_network | default([]) +
           [
             {
-              'address': item.ip_settings.static.ip + '/' + item.ip_settings.static.mask_bits,
+              'address': item.ip_settings.static.network + '/' + item.ip_settings.static.mask_bits,
               'netmask': item.ip_settings.static.mask_bits,
               'gateway': item.dhcp_server.gateway | default(omit),
               'ntp-server': item.dhcp_server['ntp-server'] | default(omit),

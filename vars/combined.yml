@@ -60,7 +60,7 @@ bridge:
         vlan-ids: "1"
         comment: "Default LAN vlan"
         mtu: 1500
-        untagged: "ether1,ether2,ether3,switch1-cpu"
+        untagged: "ether1,ether2,ether3"
         ip_settings:
           static:
             ip: &lan_ip "{{ lan_ip }}"
@@ -77,14 +77,14 @@ bridge:
       - name: vlan10
         vlan-ids: "10"
         comment: "ISP WAN vlan"
-        tagged: "ether4,switch1-cpu"
+        tagged: "ether4"
         ip_settings:
           dhcp_client:
       - name: vlan88
         vlan-ids: "88"
         comment: "Management vlan"
         mtu: 1500
-        tagged: "ether1,ether2,ether3,switch1-cpu"
+        tagged: "ether1,ether2,ether3"
         ip_settings:
           static:
             ip: &mgmt_ip "{{ mgmt_ip }}"
@@ -98,18 +98,19 @@ bridge:
 # Setting for the hardware based switch in our router
 switch:
   # LAN ports are untagged vlan 1
-  - { default-vlan-id: "1", port: "ether1", vlan-mode: "fallback", vlan-header: "leave-as-is" }
-  - { default-vlan-id: "1", port: "ether2", vlan-mode: "fallback", vlan-header: "leave-as-is" }
-  - { default-vlan-id: "1", port: "ether3", vlan-mode: "fallback", vlan-header: "leave-as-is" }
+  - { name: "ether1", default-vlan-id: "1", vlan-mode: "fallback", vlan-header: "leave-as-is" }
+  - { name: "ether2", default-vlan-id: "1", vlan-mode: "fallback", vlan-header: "leave-as-is" }
+  - { name: "ether3", default-vlan-id: "1", vlan-mode: "fallback", vlan-header: "leave-as-is" }
   # WAN ports are tagged vlan 10
-  - { default-vlan-id: "10", port: "ether4", vlan-mode: "secure", vlan-header: "leave-as-is" }
+  - { name: "ether4", default-vlan-id: "10", vlan-mode: "secure", vlan-header: "leave-as-is" }
   # Don't break management access
-  - { port: "ether5", vlan-mode: "fallback", vlan-header: "leave-as-is" }
-  - { port: "switch1-cpu", vlan-mode: "fallback", vlan-header: "leave-as-is" }
+  - { name: "ether5", vlan-mode: "fallback", vlan-header: "leave-as-is" }
+  - { name: "switch1-cpu", vlan-mode: "fallback", vlan-header: "leave-as-is" }
 
 routes:
 # Routes to stop private network IPs trying to route to world
 - { dst-address: "10.0.0.0/8", gateway: *lan_gw }
+- { dst-address: "192.168.0.0/16", gateway: *lan_gw }
 - { dst-address: "172.16.0.0/12", gateway: *lan_gw }
 - { dst-address: "169.254.0.0/16", gateway: *lan_gw }
 - { dst-address: "100.64.0.0/22", gateway: *lan_gw }
@@ -144,18 +145,18 @@ interface_list:
   - name: MGMT
     comment: 'Management interfaces'
     interfaces:
-      - name: bridgeLocal
-      - name: vlan88
+      - interface: bridgeLocal
+      - interface: vlan88
     #
   - name: LAN
     comment: LAN
     interfaces:
-      - name: vlan1
+      - interface: vlan1
   #
   - name: WAN
     comment: ISP
     interfaces:
-      - name: vlan10
+      - interface: vlan10
 
 firewall_rules:
   # input chain

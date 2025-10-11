@@ -38,6 +38,10 @@
     - interfaces
     - skip_missing: True
 
+- name: Debug bridge list
+  ansible.builtin.debug:
+    var: interface_list_members
+
 # WARNING. This step looks to be breaking connectivity
 # unless networking is set up on these vlans
 # /interface list member
