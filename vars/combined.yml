@@ -43,7 +43,6 @@ bridge:
       # Left ether5 on the default bridge during configuration.
       - { interface: ether5 }
       - { interface: sfp1 }
-    interface_vlans: []
   # New bridge for our setup
   - name: "bridge1"
     admin-mac: "{{ br1_switch_mac }}"
