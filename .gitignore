@@ -1,2 +1,5 @@
 .DS_Store
 routeros-7.20-default.rsc
+gowifi.rsc
+perfectrestore.rsc
+routeros_facts.json

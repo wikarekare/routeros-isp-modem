@@ -39,5 +39,6 @@ firewall_rules2:
   - { action: drop, chain: forward, comment: "drop all from WAN not DSTNATed", connection-nat-state: "!dstnat", connection-state: "new", in-interface-list: "WAN" }
 nat_rules2:
   - { action: masquerade, chain: srcnat, comment: "masquerade", ipsec-policy: "out,none", out-interface-list: "WAN" }
-  - { action: dst-nat, chain: dstnat, in-interface-list: "WAN", comment: http, protocol: tcp, src-port: 80, to-addresses: "{{webserver}}", to-ports: 80 }
-  - { action: dst-nat, chain: dstnat, in-interface-list: "WAN", comment: http, protocol: tcp, src-port: 443, to-addresses: "{{webserver}}", to-ports: 443 }
+  - { action: dst-nat, chain: dstnat, in-interface-list: "WAN", comment: http, protocol: tcp, dst-port: "{{ http_port }}", to-addresses: "{{webserver}}", to-ports: 80 }
+  - { action: dst-nat, chain: dstnat, in-interface-list: "WAN", comment: https, protocol: tcp, dst-port: "{{ https_port }}", to-addresses: "{{webserver}}", to-ports: 443 }
+  - { action: dst-nat, chain: dstnat, in-interface-list: "WAN", comment: ssh, protocol: tcp, dst-port: "{{ ssh_port }}", to-addresses: "{{webserver}}", to-ports: 22 }
