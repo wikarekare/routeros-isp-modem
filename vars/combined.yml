@@ -29,7 +29,7 @@ ethernet_interfaces:
 bridge:
   # Default configuration
   - name: "bridgeLocal"
-    comment: "defcon Physical Management interface"
+    comment: "defcon"
     admin-mac: "{{ def_switch_mac }}"
     auto-mac: "no"
     vlan-filtering: "no"
@@ -40,8 +40,6 @@ bridge:
     #   comment: "BridgeLocal"
     #   ranges: "{{ lan_dhcp_range }}"
     interfaces:
-      # Left ether5 on the default bridge during configuration.
-      - { interface: ether5 }
       - { interface: sfp1 }
   # New bridge for our setup
   - name: "bridge1"
@@ -54,7 +52,8 @@ bridge:
       - { interface: ether2, hw: "yes" }
       - { interface: ether3, hw: "yes" }
       - { interface: ether4, hw: "yes" }
-      # - { interface: ether5, hw: "yes" }
+      - { interface: ether5, hw: "yes" }
+#      - { interface: sfp1 }
     interface_vlans:
       - name: vlan1
         vlan-ids: "1"
@@ -101,8 +100,9 @@ switch:
   - { name: "ether1", default-vlan-id: "1", vlan-mode: "fallback", vlan-header: "leave-as-is" }
   - { name: "ether2", default-vlan-id: "1", vlan-mode: "fallback", vlan-header: "leave-as-is" }
   - { name: "ether3", default-vlan-id: "1", vlan-mode: "fallback", vlan-header: "leave-as-is" }
-  # WAN ports are tagged vlan 10
-  - { name: "ether4", default-vlan-id: "10", vlan-mode: "secure", vlan-header: "leave-as-is" }
+  # WAN ports are tagged vlan 10.
+  # For our RB960's, the advise is not to set a default-vlan-id on a tagged ports
+  - { name: "ether4", vlan-mode: "secure", vlan-header: "leave-as-is" }
   # Don't break management access
   - { name: "ether5", vlan-mode: "fallback", vlan-header: "leave-as-is" }
   - { name: "switch1-cpu", vlan-mode: "fallback", vlan-header: "leave-as-is" }
@@ -177,5 +177,6 @@ firewall_rules:
 
 nat_rules:
   - { action: masquerade, chain: srcnat, comment: "masquerade", ipsec-policy: "out,none", out-interface-list: "WAN" }
-  - { action: dst-nat, chain: dstnat, in-interface-list: "WAN", comment: http, protocol: tcp, src-port: 80, to-addresses: "{{webserver}}", to-ports: 80 }
-  - { action: dst-nat, chain: dstnat, in-interface-list: "WAN", comment: http, protocol: tcp, src-port: 443, to-addresses: "{{webserver}}", to-ports: 443 }
+  - { action: dst-nat, chain: dstnat, in-interface-list: "WAN", comment: http, protocol: tcp, dst-port: "{{ http_port }}", to-addresses: "{{webserver}}", to-ports: 80 }
+  - { action: dst-nat, chain: dstnat, in-interface-list: "WAN", comment: https, protocol: tcp, dst-port: "{{ https_port }}", to-addresses: "{{webserver}}", to-ports: 443 }
+  - { action: dst-nat, chain: dstnat, in-interface-list: "WAN", comment: ssh, protocol: tcp, dst-port: "{{ ssh_port }}", to-addresses: "{{webserver}}", to-ports: 22 }

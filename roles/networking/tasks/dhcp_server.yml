@@ -80,7 +80,7 @@
   when: dhcp_server is defined
 
 #/ip dhcp-server
-# add address-pool=dhcp_pool_vlan1 interface=vlan1 lease-time=1h name=dhcp1
+# This fails if you change the name of the dhcp server entry.
 - name: DHCP Server Config
   community.routeros.api_modify:
     path: "ip dhcp-server"
